@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createAutomation } from "@/lib/actions/automations";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; 
   const [triggerType, setTriggerType] = useState<AutomationTriggerType>("dm_keyword");
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id ?? "");
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function handleSubmit() {
     if (!name.trim()) {
@@ -29,7 +31,8 @@ export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; 
     }
     startTransition(async () => {
       try {
-        await createAutomation({ name, triggerType, instagramAccountId: accountId || null });
+        const automation = await createAutomation({ name, triggerType, instagramAccountId: accountId || null });
+        router.push(`/dashboard/automations/${automation.id}`);
       } catch {
         toast.error("Não foi possível criar a automação");
       }

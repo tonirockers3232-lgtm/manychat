@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrganization } from "@/lib/data/organizations";
@@ -39,7 +38,7 @@ export async function createAutomation(params: { name: string; triggerType: Auto
   if (error || !data) throw new Error(error?.message ?? "Falha ao criar automação");
 
   revalidatePath("/dashboard/automations");
-  redirect(`/dashboard/automations/${data.id}`);
+  return data;
 }
 
 export async function updateAutomationFlow(id: string, flowDefinition: FlowDefinition) {
