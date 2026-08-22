@@ -96,6 +96,20 @@ export interface InstagramProfile {
   profile_picture_url?: string;
 }
 
+// Inscreve a conta conectada para receber eventos no webhook do app. Configurar
+// a URL do webhook em Casos de uso → Webhooks só prepara o endpoint — sem essa
+// chamada por conta, a Meta nunca envia DMs/comentários dela para o webhook.
+export async function subscribeAccountToWebhooks(accessToken: string): Promise<void> {
+  const params = new URLSearchParams({
+    subscribed_fields: "messages,comments",
+    access_token: accessToken,
+  });
+  const res = await fetch(`${GRAPH_BASE}/me/subscribed_apps`, { method: "POST", body: params });
+  if (!res.ok) {
+    throw new Error(`Falha ao inscrever conta nos webhooks: ${await res.text()}`);
+  }
+}
+
 export async function getInstagramProfile(accessToken: string): Promise<InstagramProfile> {
   const params = new URLSearchParams({
     fields: "user_id,username,name,profile_picture_url",

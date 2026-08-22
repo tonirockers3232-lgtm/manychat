@@ -4,6 +4,7 @@ import {
   exchangeCodeForShortLivedToken,
   exchangeForLongLivedToken,
   getInstagramProfile,
+  subscribeAccountToWebhooks,
 } from "@/lib/meta/instagram-api";
 import { encryptToken, verifyOAuthState } from "@/lib/crypto";
 
@@ -48,6 +49,8 @@ export async function GET(request: NextRequest) {
       },
       { onConflict: "organization_id,instagram_business_id" }
     );
+
+    await subscribeAccountToWebhooks(longLived.access_token);
 
     return redirectTo("/dashboard/instagram?connected=1");
   } catch (error) {
