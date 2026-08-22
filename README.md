@@ -143,9 +143,23 @@ Adicionar pessoas → Testador do Instagram**, e só então publique o app em **
    (framework detectado automaticamente como Next.js) e clique em **Deploy**.
 3. Em **Settings → Environment Variables**, cole todas as variáveis de `.env.local` (exceto
    `NEXT_PUBLIC_APP_URL`, que deve apontar para o domínio real da Vercel).
-4. `vercel.json` já declara os dois Cron Jobs (`process-automations` a cada minuto,
-   `refresh-tokens` uma vez por dia). Eles só ficam ativos em produção.
+4. `vercel.json` já declara o Cron Job de `refresh-tokens` (uma vez por dia — dentro do limite do
+   plano Hobby). Ele só fica ativo em produção.
 5. Faça um redeploy depois de configurar as variáveis, para que o build as enxergue.
+
+### Processando delays das automações (`/api/cron/process-automations`)
+
+O plano **Hobby da Vercel limita Cron Jobs a 1 execução por dia** — não dá pra rodar
+`/api/cron/process-automations` a cada minuto direto pelo `vercel.json` nesse plano (por isso ele
+não está mais lá; só o `refresh-tokens`, que já é diário). Sem chamar essa rota com frequência, o
+nó "Aguardar" das automações nunca avança. Duas opções, ambas gratuitas:
+
+- **Cron externo (recomendado, grátis, sem trocar de plano):** cadastre em
+  [cron-job.org](https://cron-job.org) (ou similar) uma chamada `GET` a cada minuto para
+  `https://SEU_DOMINIO/api/cron/process-automations`, com o header
+  `Authorization: Bearer <CRON_SECRET>` (mesmo valor da variável de ambiente).
+- **Upgrade para o plano Pro da Vercel:** aí `vercel.json` pode voltar a declarar o cron nativo
+  com `"schedule": "* * * * *"`.
 
 ## Como testar cada funcionalidade
 
