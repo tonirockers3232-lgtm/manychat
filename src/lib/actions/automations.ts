@@ -47,8 +47,21 @@ export async function updateAutomationFlow(id: string, flowDefinition: FlowDefin
     throw new Error(`Fluxo inválido: ${parsed.error.issues[0]?.message ?? "formato inesperado"}`);
   }
 
+  // O motor de automação (`findMatchingAutomation`) lê `automations.trigger_config`,
+  // não o nó de gatilho dentro de `flow_definition` — sem essa sincronização, uma
+  // automação salva com keywords no editor visual nunca dispara (trigger_config
+  // fica `{}` desde a criação, keywords.length === 0, gatilho ignorado em silêncio).
+  const triggerNode = parsed.data.nodes.find((n) => n.type === "trigger");
+  const triggerConfig =
+    triggerNode?.type === "trigger"
+      ? { keywords: triggerNode.data.keywords ?? [], match_type: triggerNode.data.matchType ?? "contains" }
+      : {};
+
   const supabase = await createClient();
-  const { error } = await supabase.from("automations").update({ flow_definition: parsed.data }).eq("id", id);
+  const { error } = await supabase
+    .from("automations")
+    .update({ flow_definition: parsed.data, trigger_config: triggerConfig })
+    .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/dashboard/automations/${id}`);
 }
