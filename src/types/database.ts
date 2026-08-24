@@ -41,6 +41,15 @@ export interface InstagramAccount {
   updated_at: string;
 }
 
+export type ContactStatus =
+  | "novo"
+  | "interessado"
+  | "qualificado"
+  | "lead_quente"
+  | "em_atendimento"
+  | "cliente"
+  | "perdido";
+
 export interface Contact {
   id: string;
   organization_id: string;
@@ -51,6 +60,7 @@ export interface Contact {
   profile_pic_url: string | null;
   phone: string | null;
   email: string | null;
+  status: ContactStatus;
   is_blocked: boolean;
   last_interaction_at: string;
   created_at: string;
@@ -94,9 +104,10 @@ export interface Segment {
 export interface SegmentFilterRules {
   match: "all" | "any";
   conditions: Array<{
-    field: "tag" | "last_interaction_at" | "username";
+    field: "tag" | "last_interaction_at" | "username" | "status" | "custom_field";
     operator: "equals" | "contains" | "before" | "after" | "has_tag" | "not_has_tag";
     value: string;
+    customFieldKey?: string; // obrigatório quando field === "custom_field"
   }>;
 }
 
