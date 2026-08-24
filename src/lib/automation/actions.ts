@@ -257,10 +257,18 @@ async function executeReplyComment(
 
 async function executeHumanHandoff(ctx: RunContext): Promise<NodeExecutionResult> {
   const supabase = createAdminClient();
+  const text = "🙋 Conversa encaminhada para atendimento humano.";
 
   if (ctx.conversationId) {
     await supabase.from("conversations").update({ automation_paused: true }).eq("id", ctx.conversationId);
-    await recordOutboundMessage(ctx, "🙋 Conversa encaminhada para atendimento humano.", "automation");
+    try {
+      await sendOutboundText(ctx, text);
+    } catch {
+      // A pausa da automação (acima) já aconteceu e é o efeito que importa;
+      // se o aviso ao contato falhar (ex: fora da janela de 24h de DM), o
+      // atendente ainda vê o handoff pela Caixa de entrada.
+    }
+    await recordOutboundMessage(ctx, text, "automation");
   }
 
   return { action: "handoff" };
