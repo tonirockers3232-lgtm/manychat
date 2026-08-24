@@ -14,7 +14,7 @@ export interface RunContext {
 }
 
 export type NodeExecutionResult =
-  | { action: "continue"; branch?: "true" | "false" }
+  | { action: "continue"; branch?: "true" | "false"; skipped?: string }
   | { action: "wait"; nextNodeId: string; runAt: string }
   | { action: "stop"; reason: string };
 

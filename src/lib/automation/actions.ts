@@ -87,7 +87,7 @@ async function executeSendMessage(
   ctx: RunContext
 ): Promise<NodeExecutionResult> {
   const text = data.text?.trim();
-  if (!text) return { action: "continue" };
+  if (!text) return { action: "continue", skipped: "Nó 'Enviar mensagem' sem texto configurado" };
 
   try {
     await sendOutboundText(ctx, text);

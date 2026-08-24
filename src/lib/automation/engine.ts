@@ -125,7 +125,11 @@ async function advanceRun(run: AutomationRun, flow: FlowDefinition, ctx: RunCont
       break;
     }
 
-    await logStep(supabase, run, node.id, node.type, "success");
+    if (result.skipped) {
+      await logStep(supabase, run, node.id, node.type, "skipped", { reason: result.skipped });
+    } else {
+      await logStep(supabase, run, node.id, node.type, "success");
+    }
     currentNodeId = findNextNodeId(flow, node.id, result.branch);
   }
 

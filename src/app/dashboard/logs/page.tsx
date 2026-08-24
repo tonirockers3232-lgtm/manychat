@@ -41,8 +41,12 @@ export default async function LogsPage() {
                   <p className="font-medium">
                     {automationName ?? "Automação removida"} <span className="text-muted-foreground">· {log.node_type}</span>
                   </p>
-                  {log.status === "error" && (
-                    <p className="truncate text-xs text-destructive">{String(log.detail?.reason ?? "")}</p>
+                  {(log.status === "error" || log.status === "skipped") && log.detail?.reason && (
+                    <p
+                      className={`truncate text-xs ${log.status === "error" ? "text-destructive" : "text-muted-foreground"}`}
+                    >
+                      {String(log.detail.reason)}
+                    </p>
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
