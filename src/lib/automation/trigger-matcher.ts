@@ -1,6 +1,17 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Automation, AutomationTriggerType } from "@/types/database";
 
+// Remove acentos antes de comparar: em português "violão" e "violao" são o
+// mesmo gatilho na cabeça de quem escreve a keyword, mas contatos reais
+// digitam com acento com muito mais frequência do que quem configura a
+// automação (que tende a digitar sem acento, no teclado/hábito de dev).
+// Sem isso, uma keyword salva sem acento nunca casava com o texto real.
+const DIACRITICS_RE = new RegExp("[̀-ͯ]", "g");
+
+function normalize(value: string): string {
+  return value.trim().toLowerCase().normalize("NFD").replace(DIACRITICS_RE, "");
+}
+
 // Retorna as automações ativas da conta cujo gatilho por palavra-chave bate
 // com o texto recebido (DM ou comentário). Primeira automação cadastrada que
 // casar "ganha" — evita disparar vários fluxos concorrentes pro mesmo evento.
@@ -21,7 +32,7 @@ export async function findMatchingAutomation(params: {
 
   if (!automations?.length) return null;
 
-  const normalizedText = params.text.trim().toLowerCase();
+  const normalizedText = normalize(params.text);
 
   for (const automation of automations) {
     const keywords = automation.trigger_config?.keywords ?? [];
@@ -29,7 +40,7 @@ export async function findMatchingAutomation(params: {
 
     const matchType = automation.trigger_config?.match_type ?? "contains";
     const matched = keywords.some((keyword: string) => {
-      const normalizedKeyword = keyword.trim().toLowerCase();
+      const normalizedKeyword = normalize(keyword);
       return matchType === "exact"
         ? normalizedText === normalizedKeyword
         : normalizedText.includes(normalizedKeyword);
