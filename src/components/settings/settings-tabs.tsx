@@ -10,19 +10,32 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateOrganizationName, updateAiSettings, requestAccountDeletion } from "@/lib/actions/settings";
-import type { AiSettings, Organization } from "@/types/database";
+import { CustomFieldsTab } from "./custom-fields-tab";
+import type { AiSettings, CustomField, Organization } from "@/types/database";
 
-export function SettingsTabs({ organization, aiSettings }: { organization: Organization; aiSettings: AiSettings | null }) {
+export function SettingsTabs({
+  organization,
+  aiSettings,
+  customFields,
+}: {
+  organization: Organization;
+  aiSettings: AiSettings | null;
+  customFields: CustomField[];
+}) {
   return (
     <Tabs defaultValue="organization">
       <TabsList>
         <TabsTrigger value="organization">Organização</TabsTrigger>
+        <TabsTrigger value="fields">Campos</TabsTrigger>
         <TabsTrigger value="ai">IA</TabsTrigger>
         <TabsTrigger value="account">Conta</TabsTrigger>
       </TabsList>
 
       <TabsContent value="organization">
         <OrganizationTab organization={organization} />
+      </TabsContent>
+      <TabsContent value="fields">
+        <CustomFieldsTab organizationId={organization.id} customFields={customFields} />
       </TabsContent>
       <TabsContent value="ai">
         <AiTab aiSettings={aiSettings} />

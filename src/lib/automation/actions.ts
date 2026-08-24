@@ -1,6 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendDirectMessage, privateReplyToComment } from "@/lib/meta/instagram-api";
+import { sendDirectMessage, privateReplyToComment, replyToComment } from "@/lib/meta/instagram-api";
 import { generateAiReply } from "@/lib/openai/client";
+import { normalize } from "./trigger-matcher";
+import { buildContactVariables, renderTemplate } from "./variables";
 import type {
   FlowNode,
   SendMessageNodeData,
@@ -8,6 +10,8 @@ import type {
   DelayNodeData,
   TagNodeData,
   AiReplyNodeData,
+  AskQuestionNodeData,
+  ReplyCommentNodeData,
 } from "@/types/automation";
 import type { NodeExecutionResult, RunContext, RunLike } from "./types";
 
@@ -35,6 +39,12 @@ export async function executeNode(
       return executeTag(node.data as TagNodeData, ctx, "remove");
     case "ai_reply":
       return executeAiReply(node.data as AiReplyNodeData, ctx, run);
+    case "ask_question":
+      return executeAskQuestion(node.data as AskQuestionNodeData, ctx);
+    case "reply_comment":
+      return executeReplyComment(node.data as ReplyCommentNodeData, ctx);
+    case "human_handoff":
+      return executeHumanHandoff(ctx);
     default:
       return { action: "continue" };
   }
@@ -86,10 +96,11 @@ async function executeSendMessage(
   data: SendMessageNodeData,
   ctx: RunContext
 ): Promise<NodeExecutionResult> {
-  const text = data.text?.trim();
-  if (!text) return { action: "continue", skipped: "Nó 'Enviar mensagem' sem texto configurado" };
+  const raw = data.text?.trim();
+  if (!raw) return { action: "continue", skipped: "Nó 'Enviar mensagem' sem texto configurado" };
 
   try {
+    const text = renderTemplate(raw, await buildContactVariables(ctx.contactId));
     await sendOutboundText(ctx, text);
     await recordOutboundMessage(ctx, text, "automation");
     return { action: "continue" };
@@ -120,6 +131,16 @@ async function executeCondition(
     // instagram_business_basic não expõe status de "seguidor" diretamente;
     // tratado como sempre verdadeiro até existir um campo dedicado no contato.
     matched = true;
+  } else if (data.field === "custom_field" && data.customFieldKey) {
+    const { data: row } = await supabase
+      .from("custom_field_values")
+      .select("value, custom_fields!inner(key)")
+      .eq("contact_id", ctx.contactId)
+      .eq("custom_fields.key", data.customFieldKey)
+      .maybeSingle();
+    const haystack = normalize((row?.value as string | undefined) ?? "");
+    const needle = normalize(data.value ?? "");
+    matched = data.operator === "contains" ? haystack.includes(needle) : haystack === needle;
   }
 
   if (data.operator === "not_equals") matched = !matched;
@@ -159,6 +180,92 @@ async function executeTag(
   return { action: "continue" };
 }
 
+async function executeAskQuestion(
+  data: AskQuestionNodeData,
+  ctx: RunContext
+): Promise<NodeExecutionResult> {
+  let question = data.question?.trim();
+  if (!question) return { action: "continue", skipped: "Nó 'Pergunta' sem texto configurado" };
+
+  if (data.inputType === "choice" && data.choices?.length) {
+    question += `\n\nResponda com: ${data.choices.join(", ")}`;
+  }
+
+  try {
+    const text = renderTemplate(question, await buildContactVariables(ctx.contactId));
+    await sendOutboundText(ctx, text);
+    await recordOutboundMessage(ctx, text, "automation");
+    return { action: "ask" };
+  } catch (error) {
+    return { action: "stop", reason: (error as Error).message };
+  }
+}
+
+// Salva a resposta do contato no destino configurado no nó "Pergunta" que
+// gerou a pausa — colunas nativas de contacts (phone/email/name) ou, para
+// qualquer outra chave, upsert em custom_field_values.
+export async function saveQuestionAnswer(contactId: string, organizationId: string, saveTo: string, answer: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  if (saveTo === "phone" || saveTo === "email" || saveTo === "name") {
+    await supabase.from("contacts").update({ [saveTo]: answer }).eq("id", contactId);
+    return;
+  }
+
+  const { data: field } = await supabase
+    .from("custom_fields")
+    .upsert({ organization_id: organizationId, key: saveTo, label: saveTo }, { onConflict: "organization_id,key", ignoreDuplicates: true })
+    .select()
+    .single();
+
+  const fieldId =
+    field?.id ??
+    (
+      await supabase
+        .from("custom_fields")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("key", saveTo)
+        .single()
+    ).data?.id;
+
+  if (!fieldId) return;
+
+  await supabase
+    .from("custom_field_values")
+    .upsert({ contact_id: contactId, custom_field_id: fieldId, value: answer, updated_at: new Date().toISOString() });
+}
+
+async function executeReplyComment(
+  data: ReplyCommentNodeData,
+  ctx: RunContext
+): Promise<NodeExecutionResult> {
+  const raw = data.text?.trim();
+  if (!raw) return { action: "continue", skipped: "Nó 'Responder comentário' sem texto configurado" };
+  if (!ctx.incomingCommentId) {
+    return { action: "continue", skipped: "Nó 'Responder comentário' só funciona em automações disparadas por comentário" };
+  }
+
+  try {
+    const text = renderTemplate(raw, await buildContactVariables(ctx.contactId));
+    await replyToComment({ accessToken: ctx.accessToken, commentId: ctx.incomingCommentId, message: text });
+    return { action: "continue" };
+  } catch (error) {
+    return { action: "stop", reason: (error as Error).message };
+  }
+}
+
+async function executeHumanHandoff(ctx: RunContext): Promise<NodeExecutionResult> {
+  const supabase = createAdminClient();
+
+  if (ctx.conversationId) {
+    await supabase.from("conversations").update({ automation_paused: true }).eq("id", ctx.conversationId);
+    await recordOutboundMessage(ctx, "🙋 Conversa encaminhada para atendimento humano.", "automation");
+  }
+
+  return { action: "handoff" };
+}
+
 async function executeAiReply(
   data: AiReplyNodeData,
   ctx: RunContext,
@@ -176,7 +283,10 @@ async function executeAiReply(
         .single();
 
   if (!settings) {
-    if (data.fallbackText) await recordOutboundMessage(ctx, data.fallbackText, "ai");
+    if (data.fallbackText) {
+      const text = renderTemplate(data.fallbackText, await buildContactVariables(ctx.contactId));
+      await recordOutboundMessage(ctx, text, "ai");
+    }
     return { action: "continue" };
   }
 

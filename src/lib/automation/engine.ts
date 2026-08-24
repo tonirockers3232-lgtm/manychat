@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Automation, AutomationRun } from "@/types/database";
-import type { FlowDefinition } from "@/types/automation";
-import { executeNode } from "./actions";
+import type { AskQuestionNodeData, FlowDefinition } from "@/types/automation";
+import { executeNode, saveQuestionAnswer } from "./actions";
 import type { RunContext } from "./types";
 
 const MAX_STEPS_PER_INVOCATION = 50; // trava contra loop infinito no flow
@@ -70,6 +70,26 @@ export async function resumeAutomationRun(
   await advanceRun({ ...run, current_node_id: nextNodeId }, flow, ctx);
 }
 
+// Retoma um run que estava "waiting" num nó "Pergunta" — a mensagem recebida
+// agora é a resposta do contato, não um novo gatilho. Salva no destino
+// configurado no nó e continua o fluxo a partir do próximo passo.
+export async function resumeFromReply(
+  run: AutomationRun,
+  automation: Automation,
+  ctx: RunContext,
+  replyText: string
+): Promise<void> {
+  const flow = automation.flow_definition;
+  const questionNode = flow.nodes.find((n) => n.id === run.current_node_id);
+  if (questionNode?.type === "ask_question") {
+    const data = questionNode.data as AskQuestionNodeData;
+    await saveQuestionAnswer(ctx.contactId, ctx.organizationId, data.saveTo, replyText.trim());
+  }
+
+  const nextNodeId = findNextNodeId(flow, run.current_node_id!);
+  await advanceRun({ ...run, current_node_id: nextNodeId, context: { incomingText: replyText } }, flow, ctx);
+}
+
 async function advanceRun(run: AutomationRun, flow: FlowDefinition, ctx: RunContext): Promise<void> {
   const supabase = createAdminClient();
   let currentNodeId = run.current_node_id;
@@ -115,6 +135,20 @@ async function advanceRun(run: AutomationRun, flow: FlowDefinition, ctx: RunCont
       });
       finalStatus = "waiting";
       currentNodeId = node.id; // mantém o nó atual — resumeAutomationRun avança a partir dele
+      break;
+    }
+
+    if (result.action === "ask") {
+      await logStep(supabase, run, node.id, node.type, "success", { waitingReply: true });
+      finalStatus = "waiting";
+      currentNodeId = node.id; // resumeFromReply retoma a partir daqui quando a resposta chegar
+      break;
+    }
+
+    if (result.action === "handoff") {
+      await logStep(supabase, run, node.id, node.type, "success", { handoff: true });
+      finalStatus = "completed";
+      currentNodeId = null;
       break;
     }
 

@@ -8,9 +8,9 @@ import {
 } from "@/lib/meta/webhook";
 import { getOrCreateContact, getOrCreateConversation } from "@/lib/data/contacts";
 import { findMatchingAutomation, findNewContactAutomation } from "@/lib/automation/trigger-matcher";
-import { startAutomationRun } from "@/lib/automation/engine";
+import { startAutomationRun, resumeFromReply } from "@/lib/automation/engine";
 import type { RunContext } from "@/lib/automation/types";
-import type { InstagramAccount } from "@/types/database";
+import type { Automation, AutomationRun, InstagramAccount } from "@/types/database";
 
 // GET /api/webhook — handshake de verificação (Seção 3 do app Meta).
 export async function GET(request: NextRequest) {
@@ -136,6 +136,27 @@ async function handleIncomingMessage(
     conversationId: conversation.id,
     incomingText: text,
   };
+
+  // Se o contato tem um run "waiting" parado num nó "Pergunta", esta mensagem
+  // é a resposta esperada, não um novo gatilho — sem essa checagem, o texto
+  // digitado seria testado contra as palavras-chave e provavelmente ignorado.
+  const { data: waitingRun } = await admin
+    .from("automation_runs")
+    .select("*, automations(*)")
+    .eq("contact_id", contact.id)
+    .eq("status", "waiting")
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (waitingRun) {
+    const { automations: automation, ...run } = waitingRun as unknown as AutomationRun & { automations: Automation };
+    const currentNode = automation.flow_definition.nodes.find((n) => n.id === run.current_node_id);
+    if (currentNode?.type === "ask_question") {
+      await resumeFromReply(run, automation, ctx, text);
+      return;
+    }
+  }
 
   const automation = isNew
     ? (await findNewContactAutomation(account.id)) ?? (await findMatchingAutomation({

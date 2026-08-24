@@ -28,11 +28,21 @@ import {
 import { nodeTypes, NODE_META } from "./automation-node";
 import { NodePanel } from "./node-panel";
 import { updateAutomationFlow, updateAutomationStatus, deleteAutomation } from "@/lib/actions/automations";
-import type { Automation, AutomationStatus } from "@/types/database";
+import type { Automation, AutomationStatus, CustomField } from "@/types/database";
 import type { FlowNode, FlowNodeType, FlowNodeData } from "@/types/automation";
 import { Save, Trash2 } from "lucide-react";
 
-const PALETTE: FlowNodeType[] = ["send_message", "condition", "delay", "add_tag", "remove_tag", "ai_reply"];
+const PALETTE: FlowNodeType[] = [
+  "send_message",
+  "ask_question",
+  "condition",
+  "delay",
+  "add_tag",
+  "remove_tag",
+  "ai_reply",
+  "reply_comment",
+  "human_handoff",
+];
 
 function defaultDataFor(type: FlowNodeType): FlowNodeData {
   switch (type) {
@@ -47,12 +57,18 @@ function defaultDataFor(type: FlowNodeType): FlowNodeData {
       return { tagName: "" };
     case "ai_reply":
       return { aiSettingsId: null };
+    case "ask_question":
+      return { question: "", saveTo: "name", inputType: "text" };
+    case "reply_comment":
+      return { text: "" };
+    case "human_handoff":
+      return {};
     default:
       return { triggerType: "dm_keyword", keywords: [], matchType: "contains" };
   }
 }
 
-export function FlowEditor({ automation }: { automation: Automation }) {
+export function FlowEditor({ automation, customFields }: { automation: Automation; customFields: CustomField[] }) {
   const router = useRouter();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(automation.flow_definition.nodes as unknown as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(automation.flow_definition.edges as unknown as Edge[]);
@@ -183,6 +199,7 @@ export function FlowEditor({ automation }: { automation: Automation }) {
       {selectedNode && (
         <NodePanel
           node={selectedNode}
+          customFields={customFields}
           onChange={updateSelectedNodeData}
           onDelete={deleteSelectedNode}
           onClose={() => setSelectedNodeId(null)}

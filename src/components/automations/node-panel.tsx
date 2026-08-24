@@ -13,17 +13,21 @@ import type {
   DelayNodeData,
   TagNodeData,
   TriggerNodeData,
+  AskQuestionNodeData,
+  ReplyCommentNodeData,
 } from "@/types/automation";
+import type { CustomField } from "@/types/database";
 import { NODE_META } from "./automation-node";
 
 interface NodePanelProps {
   node: FlowNode;
+  customFields: CustomField[];
   onChange: (data: FlowNode["data"]) => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
-export function NodePanel({ node, onChange, onDelete, onClose }: NodePanelProps) {
+export function NodePanel({ node, customFields, onChange, onDelete, onClose }: NodePanelProps) {
   const meta = NODE_META[node.type];
 
   return (
@@ -37,7 +41,9 @@ export function NodePanel({ node, onChange, onDelete, onClose }: NodePanelProps)
 
       {node.type === "trigger" && <TriggerFields data={node.data as TriggerNodeData} onChange={onChange} />}
       {node.type === "send_message" && <SendMessageFields data={node.data as SendMessageNodeData} onChange={onChange} />}
-      {node.type === "condition" && <ConditionFields data={node.data as ConditionNodeData} onChange={onChange} />}
+      {node.type === "condition" && (
+        <ConditionFields data={node.data as ConditionNodeData} customFields={customFields} onChange={onChange} />
+      )}
       {node.type === "delay" && <DelayFields data={node.data as DelayNodeData} onChange={onChange} />}
       {(node.type === "add_tag" || node.type === "remove_tag") && (
         <TagFields data={node.data as TagNodeData} onChange={onChange} />
@@ -45,6 +51,18 @@ export function NodePanel({ node, onChange, onDelete, onClose }: NodePanelProps)
       {node.type === "ai_reply" && (
         <p className="text-xs text-muted-foreground">
           Usa o prompt padrão configurado em Configurações → IA para gerar a resposta.
+        </p>
+      )}
+      {node.type === "ask_question" && (
+        <AskQuestionFields data={node.data as AskQuestionNodeData} customFields={customFields} onChange={onChange} />
+      )}
+      {node.type === "reply_comment" && (
+        <ReplyCommentFields data={node.data as ReplyCommentNodeData} onChange={onChange} />
+      )}
+      {node.type === "human_handoff" && (
+        <p className="text-xs text-muted-foreground">
+          Pausa a automação para essa conversa e avisa o contato que vai falar com um atendente.
+          Retomar manualmente pela Caixa de entrada.
         </p>
       )}
 
@@ -99,7 +117,15 @@ function SendMessageFields({ data, onChange }: { data: SendMessageNodeData; onCh
   );
 }
 
-function ConditionFields({ data, onChange }: { data: ConditionNodeData; onChange: (d: ConditionNodeData) => void }) {
+function ConditionFields({
+  data,
+  customFields,
+  onChange,
+}: {
+  data: ConditionNodeData;
+  customFields: CustomField[];
+  onChange: (d: ConditionNodeData) => void;
+}) {
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
@@ -112,13 +138,119 @@ function ConditionFields({ data, onChange }: { data: ConditionNodeData; onChange
             <SelectItem value="message_contains">Mensagem contém</SelectItem>
             <SelectItem value="has_tag">Contato tem a tag</SelectItem>
             <SelectItem value="is_follower">É seguidor</SelectItem>
+            <SelectItem value="custom_field">Campo personalizado</SelectItem>
           </SelectContent>
         </Select>
       </div>
+      {data.field === "custom_field" && (
+        <div className="space-y-1.5">
+          <Label>Qual campo</Label>
+          <Select value={data.customFieldKey ?? ""} onValueChange={(v) => onChange({ ...data, customFieldKey: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um campo" />
+            </SelectTrigger>
+            <SelectContent>
+              {customFields.map((field) => (
+                <SelectItem key={field.id} value={field.key}>
+                  {field.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="space-y-1.5">
         <Label>Valor</Label>
         <Input value={data.value} onChange={(e) => onChange({ ...data, value: e.target.value })} />
       </div>
+    </div>
+  );
+}
+
+function AskQuestionFields({
+  data,
+  customFields,
+  onChange,
+}: {
+  data: AskQuestionNodeData;
+  customFields: CustomField[];
+  onChange: (d: AskQuestionNodeData) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <Label>Pergunta</Label>
+        <Textarea
+          value={data.question ?? ""}
+          onChange={(e) => onChange({ ...data, question: e.target.value })}
+          rows={3}
+          placeholder="Qual seu objetivo?"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Salvar resposta em</Label>
+        <Select value={data.saveTo} onValueChange={(v) => onChange({ ...data, saveTo: v })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name">Nome</SelectItem>
+            <SelectItem value="phone">Telefone</SelectItem>
+            <SelectItem value="email">E-mail</SelectItem>
+            {customFields.map((field) => (
+              <SelectItem key={field.id} value={field.key}>
+                {field.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Tipo de resposta esperada</Label>
+        <Select
+          value={data.inputType}
+          onValueChange={(v) => onChange({ ...data, inputType: v as AskQuestionNodeData["inputType"] })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="text">Texto livre</SelectItem>
+            <SelectItem value="number">Número</SelectItem>
+            <SelectItem value="email">E-mail</SelectItem>
+            <SelectItem value="phone">Telefone</SelectItem>
+            <SelectItem value="choice">Múltipla escolha</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {data.inputType === "choice" && (
+        <div className="space-y-1.5">
+          <Label>Opções (uma por linha)</Label>
+          <Textarea
+            value={(data.choices ?? []).join("\n")}
+            onChange={(e) => onChange({ ...data, choices: e.target.value.split("\n").map((c) => c.trim()).filter(Boolean) })}
+            rows={3}
+            placeholder={"Imóvel\nVeículo\nOutro"}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReplyCommentFields({ data, onChange }: { data: ReplyCommentNodeData; onChange: (d: ReplyCommentNodeData) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <Label>Texto da resposta pública</Label>
+      <Textarea
+        value={data.text ?? ""}
+        onChange={(e) => onChange({ ...data, text: e.target.value })}
+        rows={4}
+        placeholder="Te chamei no Direct! 📩"
+      />
+      <p className="text-xs text-muted-foreground">
+        Só funciona em automações com gatilho de comentário — em automações de DM esse nó é ignorado.
+      </p>
     </div>
   );
 }

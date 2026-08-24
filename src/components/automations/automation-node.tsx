@@ -1,9 +1,19 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Zap, MessageSquare, GitBranch, Clock, Tag, TagIcon, Sparkles } from "lucide-react";
+import { Zap, MessageSquare, GitBranch, Clock, Tag, TagIcon, Sparkles, HelpCircle, Reply, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { FlowNodeType, FlowNodeData, SendMessageNodeData, ConditionNodeData, DelayNodeData, TagNodeData, TriggerNodeData } from "@/types/automation";
+import type {
+  FlowNodeType,
+  FlowNodeData,
+  SendMessageNodeData,
+  ConditionNodeData,
+  DelayNodeData,
+  TagNodeData,
+  TriggerNodeData,
+  AskQuestionNodeData,
+  ReplyCommentNodeData,
+} from "@/types/automation";
 
 const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: string }> = {
   trigger: { label: "Gatilho", icon: Zap, color: "border-amber-400 bg-amber-50" },
@@ -13,6 +23,9 @@ const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: 
   add_tag: { label: "Adicionar tag", icon: Tag, color: "border-emerald-400 bg-emerald-50" },
   remove_tag: { label: "Remover tag", icon: TagIcon, color: "border-rose-400 bg-rose-50" },
   ai_reply: { label: "Resposta com IA", icon: Sparkles, color: "border-violet-400 bg-violet-50" },
+  ask_question: { label: "Pergunta", icon: HelpCircle, color: "border-cyan-400 bg-cyan-50" },
+  reply_comment: { label: "Responder comentário", icon: Reply, color: "border-sky-400 bg-sky-50" },
+  human_handoff: { label: "Atendimento humano", icon: UserCheck, color: "border-red-400 bg-red-50" },
 };
 
 function summarize(type: FlowNodeType, data: FlowNodeData): string {
@@ -36,6 +49,12 @@ function summarize(type: FlowNodeType, data: FlowNodeData): string {
       return (data as TagNodeData).tagName || "Sem tag definida";
     case "ai_reply":
       return "Responder usando IA configurada";
+    case "ask_question":
+      return (data as AskQuestionNodeData).question?.slice(0, 60) || "Sem pergunta definida";
+    case "reply_comment":
+      return (data as ReplyCommentNodeData).text?.slice(0, 60) || "Sem texto definido";
+    case "human_handoff":
+      return "Pausa a automação e encaminha para atendimento humano";
     default:
       return "";
   }
@@ -92,6 +111,9 @@ export const nodeTypes = {
   add_tag: AutomationNode,
   remove_tag: AutomationNode,
   ai_reply: AutomationNode,
+  ask_question: AutomationNode,
+  reply_comment: AutomationNode,
+  human_handoff: AutomationNode,
 };
 
 export { NODE_META };

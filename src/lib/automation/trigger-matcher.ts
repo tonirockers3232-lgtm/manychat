@@ -8,7 +8,7 @@ import type { Automation, AutomationTriggerType } from "@/types/database";
 // Sem isso, uma keyword salva sem acento nunca casava com o texto real.
 const DIACRITICS_RE = new RegExp("[̀-ͯ]", "g");
 
-function normalize(value: string): string {
+export function normalize(value: string): string {
   return value.trim().toLowerCase().normalize("NFD").replace(DIACRITICS_RE, "");
 }
 

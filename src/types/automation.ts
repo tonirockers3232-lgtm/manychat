@@ -8,7 +8,10 @@ export type FlowNodeType =
   | "delay"
   | "add_tag"
   | "remove_tag"
-  | "ai_reply";
+  | "ai_reply"
+  | "ask_question"
+  | "reply_comment"
+  | "human_handoff";
 
 export interface FlowNodeBase {
   id: string;
@@ -30,9 +33,10 @@ export interface SendMessageNodeData {
 }
 
 export interface ConditionNodeData {
-  field: "has_tag" | "message_contains" | "is_follower";
+  field: "has_tag" | "message_contains" | "is_follower" | "custom_field";
   operator: "equals" | "contains" | "not_equals";
   value: string;
+  customFieldKey?: string; // obrigatório quando field === "custom_field"
   // Aresta com sourceHandle "true" segue por aqui, "false" pelo outro ramo.
 }
 
@@ -50,13 +54,33 @@ export interface AiReplyNodeData {
   fallbackText?: string;
 }
 
+// saveTo: "phone" | "email" | "name" mapeiam para colunas nativas de contacts;
+// qualquer outro valor é a `key` de um custom_field da organização.
+export interface AskQuestionNodeData {
+  question: string;
+  saveTo: string;
+  inputType: "text" | "number" | "email" | "phone" | "choice";
+  choices?: string[]; // só relevante quando inputType === "choice"
+}
+
+// Só produz efeito quando o run foi disparado por um comentário
+// (ctx.incomingCommentId) — ver executeReplyComment.
+export interface ReplyCommentNodeData {
+  text: string;
+}
+
+export type HumanHandoffNodeData = Record<string, never>;
+
 export type FlowNodeData =
   | TriggerNodeData
   | SendMessageNodeData
   | ConditionNodeData
   | DelayNodeData
   | TagNodeData
-  | AiReplyNodeData;
+  | AiReplyNodeData
+  | AskQuestionNodeData
+  | ReplyCommentNodeData
+  | HumanHandoffNodeData;
 
 export interface FlowNode extends FlowNodeBase {
   data: FlowNodeData;

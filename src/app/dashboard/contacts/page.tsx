@@ -39,6 +39,8 @@ export default async function ContactsPage() {
                   <p className="text-xs text-muted-foreground">
                     Última interação{" "}
                     {formatDistanceToNow(new Date(contact.last_interaction_at), { addSuffix: true, locale: ptBR })}
+                    {(contact.phone || contact.email) && " · "}
+                    {[contact.phone, contact.email].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <div className="flex gap-1">

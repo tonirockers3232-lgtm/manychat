@@ -49,9 +49,30 @@ export interface Contact {
   username: string | null;
   name: string | null;
   profile_pic_url: string | null;
+  phone: string | null;
+  email: string | null;
   is_blocked: boolean;
   last_interaction_at: string;
   created_at: string;
+}
+
+export type CustomFieldType = "text" | "number" | "email" | "phone" | "select" | "boolean";
+
+export interface CustomField {
+  id: string;
+  organization_id: string;
+  key: string;
+  label: string;
+  field_type: CustomFieldType;
+  options: string[];
+  created_at: string;
+}
+
+export interface CustomFieldValue {
+  contact_id: string;
+  custom_field_id: string;
+  value: string | null;
+  updated_at: string;
 }
 
 export interface Tag {

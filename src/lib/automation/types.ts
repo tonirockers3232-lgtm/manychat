@@ -16,6 +16,8 @@ export interface RunContext {
 export type NodeExecutionResult =
   | { action: "continue"; branch?: "true" | "false"; skipped?: string }
   | { action: "wait"; nextNodeId: string; runAt: string }
+  | { action: "ask" } // pergunta enviada; run pausa até a próxima mensagem do contato
+  | { action: "handoff" } // encaminhado para atendimento humano; run termina com sucesso
   | { action: "stop"; reason: string };
 
 export type RunLike = Pick<AutomationRun, "id" | "context">;

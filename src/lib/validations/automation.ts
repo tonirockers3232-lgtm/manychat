@@ -22,9 +22,10 @@ const sendMessageDataSchema = z.object({
 });
 
 const conditionDataSchema = z.object({
-  field: z.enum(["has_tag", "message_contains", "is_follower"]),
+  field: z.enum(["has_tag", "message_contains", "is_follower", "custom_field"]),
   operator: z.enum(["equals", "contains", "not_equals"]),
   value: z.string(),
+  customFieldKey: z.string().optional(),
 });
 
 const delayDataSchema = z.object({
@@ -41,6 +42,19 @@ const aiReplyDataSchema = z.object({
   fallbackText: z.string().optional(),
 });
 
+const askQuestionDataSchema = z.object({
+  question: z.string(),
+  saveTo: z.string().min(1),
+  inputType: z.enum(["text", "number", "email", "phone", "choice"]),
+  choices: z.array(z.string()).optional(),
+});
+
+const replyCommentDataSchema = z.object({
+  text: z.string(),
+});
+
+const humanHandoffDataSchema = z.object({});
+
 const flowNodeSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string().min(1), type: z.literal("trigger"), position: positionSchema, data: triggerDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("send_message"), position: positionSchema, data: sendMessageDataSchema }),
@@ -49,6 +63,9 @@ const flowNodeSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string().min(1), type: z.literal("add_tag"), position: positionSchema, data: tagDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("remove_tag"), position: positionSchema, data: tagDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("ai_reply"), position: positionSchema, data: aiReplyDataSchema }),
+  z.object({ id: z.string().min(1), type: z.literal("ask_question"), position: positionSchema, data: askQuestionDataSchema }),
+  z.object({ id: z.string().min(1), type: z.literal("reply_comment"), position: positionSchema, data: replyCommentDataSchema }),
+  z.object({ id: z.string().min(1), type: z.literal("human_handoff"), position: positionSchema, data: humanHandoffDataSchema }),
 ]);
 
 const flowEdgeSchema = z.object({
