@@ -43,6 +43,7 @@ const PALETTE: FlowNodeType[] = [
   "ai_reply",
   "reply_comment",
   "human_handoff",
+  "start_automation",
 ];
 
 function defaultDataFor(type: FlowNodeType): FlowNodeData {
@@ -66,12 +67,22 @@ function defaultDataFor(type: FlowNodeType): FlowNodeData {
       return { text: "" };
     case "human_handoff":
       return {};
+    case "start_automation":
+      return { targetAutomationId: "" };
     default:
       return { triggerType: "dm_keyword", keywords: [], matchType: "contains" };
   }
 }
 
-export function FlowEditor({ automation, customFields }: { automation: Automation; customFields: CustomField[] }) {
+export function FlowEditor({
+  automation,
+  customFields,
+  otherAutomations,
+}: {
+  automation: Automation;
+  customFields: CustomField[];
+  otherAutomations: Array<{ id: string; name: string }>;
+}) {
   const router = useRouter();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(automation.flow_definition.nodes as unknown as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(automation.flow_definition.edges as unknown as Edge[]);
@@ -203,6 +214,7 @@ export function FlowEditor({ automation, customFields }: { automation: Automatio
         <NodePanel
           node={selectedNode}
           customFields={customFields}
+          otherAutomations={otherAutomations}
           onChange={updateSelectedNodeData}
           onDelete={deleteSelectedNode}
           onClose={() => setSelectedNodeId(null)}

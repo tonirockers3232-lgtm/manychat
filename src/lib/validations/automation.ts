@@ -34,7 +34,7 @@ const randomSplitDataSchema = z.object({
 
 const delayDataSchema = z.object({
   amount: z.number().positive(),
-  unit: z.enum(["seconds", "minutes", "hours"]),
+  unit: z.enum(["seconds", "minutes", "hours", "days"]),
 });
 
 const tagDataSchema = z.object({
@@ -59,6 +59,11 @@ const replyCommentDataSchema = z.object({
 
 const humanHandoffDataSchema = z.object({});
 
+const startAutomationDataSchema = z.object({
+  targetAutomationId: z.string(),
+  targetAutomationName: z.string().optional(),
+});
+
 const flowNodeSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string().min(1), type: z.literal("trigger"), position: positionSchema, data: triggerDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("send_message"), position: positionSchema, data: sendMessageDataSchema }),
@@ -71,6 +76,7 @@ const flowNodeSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string().min(1), type: z.literal("ask_question"), position: positionSchema, data: askQuestionDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("reply_comment"), position: positionSchema, data: replyCommentDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("human_handoff"), position: positionSchema, data: humanHandoffDataSchema }),
+  z.object({ id: z.string().min(1), type: z.literal("start_automation"), position: positionSchema, data: startAutomationDataSchema }),
 ]);
 
 const flowEdgeSchema = z.object({

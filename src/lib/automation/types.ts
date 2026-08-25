@@ -11,6 +11,7 @@ export interface RunContext {
   conversationId: string | null;
   incomingText?: string; // texto da DM ou comentário que disparou o fluxo
   incomingCommentId?: string; // presente quando o gatilho foi um comentário
+  chainDepth?: number; // nº de saltos "iniciar automação" já percorridos nesta cadeia (trava contra loop entre automações)
 }
 
 export type NodeExecutionResult =
@@ -18,6 +19,7 @@ export type NodeExecutionResult =
   | { action: "wait"; nextNodeId: string; runAt: string }
   | { action: "ask" } // pergunta enviada, ou mensagem com botões; run pausa até a próxima mensagem/toque do contato
   | { action: "handoff" } // encaminhado para atendimento humano; run termina com sucesso
+  | { action: "start_automation"; targetAutomationId: string } // dispara outra automação em paralelo; este run continua normalmente
   | { action: "stop"; reason: string };
 
 export type RunLike = Pick<AutomationRun, "id" | "context">;

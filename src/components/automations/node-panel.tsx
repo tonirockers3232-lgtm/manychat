@@ -16,6 +16,7 @@ import type {
   TriggerNodeData,
   AskQuestionNodeData,
   ReplyCommentNodeData,
+  StartAutomationNodeData,
 } from "@/types/automation";
 import type { CustomField } from "@/types/database";
 import { NODE_META } from "./automation-node";
@@ -23,12 +24,13 @@ import { NODE_META } from "./automation-node";
 interface NodePanelProps {
   node: FlowNode;
   customFields: CustomField[];
+  otherAutomations: Array<{ id: string; name: string }>;
   onChange: (data: FlowNode["data"]) => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
-export function NodePanel({ node, customFields, onChange, onDelete, onClose }: NodePanelProps) {
+export function NodePanel({ node, customFields, otherAutomations, onChange, onDelete, onClose }: NodePanelProps) {
   const meta = NODE_META[node.type];
 
   return (
@@ -69,6 +71,13 @@ export function NodePanel({ node, customFields, onChange, onDelete, onClose }: N
           Retomar manualmente pela Caixa de entrada.
         </p>
       )}
+      {node.type === "start_automation" && (
+        <StartAutomationFields
+          data={node.data as StartAutomationNodeData}
+          otherAutomations={otherAutomations}
+          onChange={onChange}
+        />
+      )}
 
       {node.type !== "trigger" && (
         <Button variant="destructive" size="sm" className="w-full" onClick={onDelete}>
@@ -80,9 +89,18 @@ export function NodePanel({ node, customFields, onChange, onDelete, onClose }: N
   );
 }
 
-const UNCONDITIONAL_TRIGGERS: TriggerNodeData["triggerType"][] = ["new_contact", "story_reply", "story_mention"];
+const UNCONDITIONAL_TRIGGERS: TriggerNodeData["triggerType"][] = ["new_contact", "story_reply", "story_mention", "manual"];
 
 function TriggerFields({ data, onChange }: { data: TriggerNodeData; onChange: (d: TriggerNodeData) => void }) {
+  if (data.triggerType === "manual") {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Essa automação nunca dispara sozinha — só quando um nó &quot;Iniciar automação&quot; de outro fluxo aponta pra
+        ela. É a base de uma sequência: monte aqui uma cadeia de Enviar mensagem → Aguardar → Enviar mensagem, e
+        inscreva contatos nela a partir de qualquer outra automação.
+      </p>
+    );
+  }
   if (UNCONDITIONAL_TRIGGERS.includes(data.triggerType)) {
     return (
       <p className="text-xs text-muted-foreground">
@@ -364,9 +382,46 @@ function DelayFields({ data, onChange }: { data: DelayNodeData; onChange: (d: De
             <SelectItem value="seconds">Segundos</SelectItem>
             <SelectItem value="minutes">Minutos</SelectItem>
             <SelectItem value="hours">Horas</SelectItem>
+            <SelectItem value="days">Dias</SelectItem>
           </SelectContent>
         </Select>
       </div>
+    </div>
+  );
+}
+
+function StartAutomationFields({
+  data,
+  otherAutomations,
+  onChange,
+}: {
+  data: StartAutomationNodeData;
+  otherAutomations: Array<{ id: string; name: string }>;
+  onChange: (d: StartAutomationNodeData) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label>Automação de destino</Label>
+      <Select
+        value={data.targetAutomationId || undefined}
+        onValueChange={(v) => onChange({ targetAutomationId: v, targetAutomationName: otherAutomations.find((a) => a.id === v)?.name })}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Selecione uma automação" />
+        </SelectTrigger>
+        <SelectContent>
+          {otherAutomations.map((a) => (
+            <SelectItem key={a.id} value={a.id}>
+              {a.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground">
+        Dispara a automação escolhida em paralelo pro mesmo contato — o fluxo atual continua normalmente daqui pra
+        frente. É assim que se monta uma sequência: crie uma automação com gatilho &quot;Início manual&quot; contendo
+        Enviar mensagem → Aguardar → Enviar mensagem, e aponte pra ela a partir daqui.
+      </p>
     </div>
   );
 }

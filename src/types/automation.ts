@@ -12,7 +12,8 @@ export type FlowNodeType =
   | "ai_reply"
   | "ask_question"
   | "reply_comment"
-  | "human_handoff";
+  | "human_handoff"
+  | "start_automation";
 
 export interface FlowNodeBase {
   id: string;
@@ -52,7 +53,7 @@ export interface RandomSplitNodeData {
 
 export interface DelayNodeData {
   amount: number;
-  unit: "seconds" | "minutes" | "hours";
+  unit: "seconds" | "minutes" | "hours" | "days";
 }
 
 export interface TagNodeData {
@@ -81,6 +82,18 @@ export interface ReplyCommentNodeData {
 
 export type HumanHandoffNodeData = Record<string, never>;
 
+// Inicia o run de OUTRA automação para o mesmo contato, em paralelo — o fluxo
+// atual continua normalmente a partir daqui. É o bloco genérico por trás de
+// "Sequências" (uma automação com gatilho "manual" que só encadeia
+// mensagem→aguardar→mensagem) e de "encaminhar para outra automação": os dois
+// casos do ManyChat são o mesmo primitivo, sem precisar de um objeto novo.
+// `targetAutomationName` é só um retrato pra exibir no card do nó — o motor
+// sempre resolve a automação de novo pelo id na hora de rodar.
+export interface StartAutomationNodeData {
+  targetAutomationId: string;
+  targetAutomationName?: string;
+}
+
 export type FlowNodeData =
   | TriggerNodeData
   | SendMessageNodeData
@@ -91,7 +104,8 @@ export type FlowNodeData =
   | AiReplyNodeData
   | AskQuestionNodeData
   | ReplyCommentNodeData
-  | HumanHandoffNodeData;
+  | HumanHandoffNodeData
+  | StartAutomationNodeData;
 
 export interface FlowNode extends FlowNodeBase {
   data: FlowNodeData;

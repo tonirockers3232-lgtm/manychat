@@ -18,6 +18,11 @@ const TRIGGER_OPTIONS: Array<{ value: AutomationTriggerType; label: string; desc
   { value: "new_contact", label: "Novo contato", description: "Dispara na primeira mensagem de um novo contato." },
   { value: "story_reply", label: "Resposta a Story", description: "Dispara quando alguém responde a um Story seu." },
   { value: "story_mention", label: "Menção em Story", description: "Dispara quando alguém marca sua conta num Story." },
+  {
+    value: "manual",
+    label: "Início manual (sequência)",
+    description: "Não dispara sozinha — só quando outra automação usa o nó 'Iniciar automação' pra inscrever o contato aqui.",
+  },
 ];
 
 export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; username: string | null }> }) {

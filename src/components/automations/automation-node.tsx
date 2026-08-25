@@ -1,7 +1,7 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Zap, MessageSquare, GitBranch, Shuffle, Clock, Tag, TagIcon, Sparkles, HelpCircle, Reply, UserCheck } from "lucide-react";
+import { Zap, MessageSquare, GitBranch, Shuffle, Clock, Tag, TagIcon, Sparkles, HelpCircle, Reply, UserCheck, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   FlowNodeType,
@@ -14,6 +14,7 @@ import type {
   TriggerNodeData,
   AskQuestionNodeData,
   ReplyCommentNodeData,
+  StartAutomationNodeData,
 } from "@/types/automation";
 
 const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: string }> = {
@@ -28,12 +29,14 @@ const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: 
   ask_question: { label: "Pergunta", icon: HelpCircle, color: "border-cyan-400 bg-cyan-50" },
   reply_comment: { label: "Responder comentário", icon: Reply, color: "border-sky-400 bg-sky-50" },
   human_handoff: { label: "Atendimento humano", icon: UserCheck, color: "border-red-400 bg-red-50" },
+  start_automation: { label: "Iniciar automação", icon: Rocket, color: "border-teal-400 bg-teal-50" },
 };
 
 const UNCONDITIONAL_TRIGGER_LABEL: Partial<Record<TriggerNodeData["triggerType"], string>> = {
   new_contact: "Novo contato",
   story_reply: "Resposta a Story",
   story_mention: "Menção em Story",
+  manual: "Início manual (via outra automação)",
 };
 
 function summarize(type: FlowNodeType, data: FlowNodeData): string {
@@ -69,6 +72,8 @@ function summarize(type: FlowNodeType, data: FlowNodeData): string {
       return (data as ReplyCommentNodeData).text?.slice(0, 60) || "Sem texto definido";
     case "human_handoff":
       return "Pausa a automação e encaminha para atendimento humano";
+    case "start_automation":
+      return (data as StartAutomationNodeData).targetAutomationName || "Sem automação de destino selecionada";
     default:
       return "";
   }
@@ -166,6 +171,7 @@ export const nodeTypes = {
   ask_question: AutomationNode,
   reply_comment: AutomationNode,
   human_handoff: AutomationNode,
+  start_automation: AutomationNode,
 };
 
 export { NODE_META };

@@ -190,6 +190,37 @@ async function advanceRun(run: AutomationRun, flow: FlowDefinition, ctx: RunCont
       break;
     }
 
+    if (result.action === "start_automation") {
+      // Encadeamento entre automações (base de "Sequências" e "iniciar outra
+      // automação"): dispara um run independente na automação alvo e segue
+      // o fluxo atual normalmente — não pausa nem espera o outro run.
+      // `chainDepth` trava ciclos (A inicia B, B inicia A, ...) sem precisar
+      // detectar o ciclo em si, só limitar a profundidade.
+      const depth = ctx.chainDepth ?? 0;
+      if (depth >= 5) {
+        await logStep(supabase, run, node.id, node.type, "skipped", {
+          reason: "Limite de encadeamento entre automações atingido (5) — evita loop infinito",
+        });
+      } else {
+        const { data: target } = await supabase
+          .from("automations")
+          .select("*")
+          .eq("id", result.targetAutomationId)
+          .eq("status", "active")
+          .maybeSingle();
+        if (target) {
+          await logStep(supabase, run, node.id, node.type, "success", { startedAutomationId: target.id });
+          await startAutomationRun(target, { ...ctx, chainDepth: depth + 1 });
+        } else {
+          await logStep(supabase, run, node.id, node.type, "skipped", {
+            reason: "Automação de destino não encontrada ou não está ativa",
+          });
+        }
+      }
+      currentNodeId = findNextNodeId(flow, node.id);
+      continue;
+    }
+
     if (result.skipped) {
       await logStep(supabase, run, node.id, node.type, "skipped", { reason: result.skipped });
     } else {

@@ -13,6 +13,7 @@ import type {
   AiReplyNodeData,
   AskQuestionNodeData,
   ReplyCommentNodeData,
+  StartAutomationNodeData,
 } from "@/types/automation";
 import type { NodeExecutionResult, RunContext, RunLike } from "./types";
 
@@ -20,6 +21,7 @@ const DELAY_MULTIPLIER: Record<DelayNodeData["unit"], number> = {
   seconds: 1000,
   minutes: 60 * 1000,
   hours: 60 * 60 * 1000,
+  days: 24 * 60 * 60 * 1000,
 };
 
 export async function executeNode(
@@ -48,6 +50,8 @@ export async function executeNode(
       return executeReplyComment(node.data as ReplyCommentNodeData, ctx);
     case "human_handoff":
       return executeHumanHandoff(ctx);
+    case "start_automation":
+      return executeStartAutomation(node.data as StartAutomationNodeData);
     default:
       return { action: "continue" };
   }
@@ -167,6 +171,16 @@ function executeRandomSplit(data: RandomSplitNodeData): NodeExecutionResult {
   const splitPercent = Math.min(100, Math.max(0, data.splitPercent ?? 50));
   const branch = Math.random() * 100 < splitPercent ? "a" : "b";
   return { action: "continue", branch };
+}
+
+// Só valida e devolve o id — quem de fato inicia o outro run é `engine.ts`
+// (advanceRun), que já é dono de `startAutomationRun`. Evita um import
+// circular actions.ts <-> engine.ts.
+function executeStartAutomation(data: StartAutomationNodeData): NodeExecutionResult {
+  if (!data.targetAutomationId) {
+    return { action: "continue", skipped: "Nó 'Iniciar automação' sem automação de destino selecionada" };
+  }
+  return { action: "start_automation", targetAutomationId: data.targetAutomationId };
 }
 
 function executeDelay(nodeId: string, data: DelayNodeData): NodeExecutionResult {

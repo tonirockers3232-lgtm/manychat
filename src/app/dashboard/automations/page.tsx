@@ -20,7 +20,7 @@ const TRIGGER_LABEL = {
   new_contact: "Novo contato",
   story_reply: "Resposta a Story",
   story_mention: "Menção em Story",
-  manual: "Manual",
+  manual: "Início manual (sequência)",
 };
 
 export default async function AutomationsPage() {
