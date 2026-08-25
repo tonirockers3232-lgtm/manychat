@@ -6,10 +6,12 @@ import type { RunContext } from "@/lib/automation/types";
 
 const BATCH_SIZE = 25;
 
-// GET /api/cron/process-automations — chamado pelo Vercel Cron (ver
-// vercel.json) a cada minuto. Processa os nós de "delay" cujo prazo venceu.
-// Serverless não mantém timers vivos entre invocações, então todo delay do
-// fluxo visual passa por uma linha em `pending_actions` em vez de um sleep.
+// GET /api/cron/process-automations — chamado por um cron externo
+// (cron-job.org, a cada minuto; a Vercel Hobby só libera 1 cron próprio em
+// vercel.json, já reservado para refresh-tokens). Processa os nós de "delay"
+// cujo prazo venceu. Serverless não mantém timers vivos entre invocações,
+// então todo delay do fluxo visual passa por uma linha em `pending_actions`
+// em vez de um sleep.
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
