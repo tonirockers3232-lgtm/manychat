@@ -10,6 +10,7 @@ import type {
   FlowNode,
   SendMessageNodeData,
   ConditionNodeData,
+  RandomSplitNodeData,
   DelayNodeData,
   TagNodeData,
   TriggerNodeData,
@@ -43,6 +44,9 @@ export function NodePanel({ node, customFields, onChange, onDelete, onClose }: N
       {node.type === "send_message" && <SendMessageFields data={node.data as SendMessageNodeData} onChange={onChange} />}
       {node.type === "condition" && (
         <ConditionFields data={node.data as ConditionNodeData} customFields={customFields} onChange={onChange} />
+      )}
+      {node.type === "random_split" && (
+        <RandomSplitFields data={node.data as RandomSplitNodeData} onChange={onChange} />
       )}
       {node.type === "delay" && <DelayFields data={node.data as DelayNodeData} onChange={onChange} />}
       {(node.type === "add_tag" || node.type === "remove_tag") && (
@@ -173,6 +177,32 @@ function ConditionFields({
         <Label>Valor</Label>
         <Input value={data.value} onChange={(e) => onChange({ ...data, value: e.target.value })} />
       </div>
+    </div>
+  );
+}
+
+function RandomSplitFields({
+  data,
+  onChange,
+}: {
+  data: RandomSplitNodeData;
+  onChange: (d: RandomSplitNodeData) => void;
+}) {
+  const splitPercent = data.splitPercent ?? 50;
+  return (
+    <div className="space-y-1.5">
+      <Label>Chance de seguir pelo ramo A</Label>
+      <Input
+        type="number"
+        min={0}
+        max={100}
+        value={splitPercent}
+        onChange={(e) => onChange({ ...data, splitPercent: Math.min(100, Math.max(0, Number(e.target.value))) })}
+      />
+      <p className="text-xs text-muted-foreground">
+        {splitPercent}% dos contatos seguem pelo ramo A, {100 - splitPercent}% pelo ramo B — sorteado a cada execução.
+        Útil para testar duas versões de uma mensagem (teste A/B).
+      </p>
     </div>
   );
 }

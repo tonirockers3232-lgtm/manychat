@@ -1,13 +1,14 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Zap, MessageSquare, GitBranch, Clock, Tag, TagIcon, Sparkles, HelpCircle, Reply, UserCheck } from "lucide-react";
+import { Zap, MessageSquare, GitBranch, Shuffle, Clock, Tag, TagIcon, Sparkles, HelpCircle, Reply, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   FlowNodeType,
   FlowNodeData,
   SendMessageNodeData,
   ConditionNodeData,
+  RandomSplitNodeData,
   DelayNodeData,
   TagNodeData,
   TriggerNodeData,
@@ -19,6 +20,7 @@ const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: 
   trigger: { label: "Gatilho", icon: Zap, color: "border-amber-400 bg-amber-50" },
   send_message: { label: "Enviar mensagem", icon: MessageSquare, color: "border-blue-400 bg-blue-50" },
   condition: { label: "Condição", icon: GitBranch, color: "border-purple-400 bg-purple-50" },
+  random_split: { label: "Divisão aleatória", icon: Shuffle, color: "border-indigo-400 bg-indigo-50" },
   delay: { label: "Aguardar", icon: Clock, color: "border-orange-400 bg-orange-50" },
   add_tag: { label: "Adicionar tag", icon: Tag, color: "border-emerald-400 bg-emerald-50" },
   remove_tag: { label: "Remover tag", icon: TagIcon, color: "border-rose-400 bg-rose-50" },
@@ -47,6 +49,10 @@ function summarize(type: FlowNodeType, data: FlowNodeData): string {
     case "condition": {
       const d = data as ConditionNodeData;
       return `${d.field} ${d.operator} "${d.value}"`;
+    }
+    case "random_split": {
+      const d = data as RandomSplitNodeData;
+      return `${d.splitPercent}% A / ${100 - d.splitPercent}% B`;
     }
     case "delay": {
       const d = data as DelayNodeData;
@@ -98,11 +104,22 @@ export function AutomationNode({ data, type, selected }: NodeProps) {
           <span>Não</span>
         </div>
       ) : null}
+      {nodeType === "random_split" ? (
+        <div className="mt-2 flex justify-between text-[10px] font-medium text-muted-foreground">
+          <span>A</span>
+          <span>B</span>
+        </div>
+      ) : null}
 
       {nodeType === "condition" ? (
         <>
           <Handle type="source" position={Position.Bottom} id="true" className="!left-6 !bg-emerald-500" />
           <Handle type="source" position={Position.Bottom} id="false" className="!left-auto !right-6 !bg-rose-500" />
+        </>
+      ) : nodeType === "random_split" ? (
+        <>
+          <Handle type="source" position={Position.Bottom} id="a" className="!left-6 !bg-indigo-500" />
+          <Handle type="source" position={Position.Bottom} id="b" className="!left-auto !right-6 !bg-indigo-300" />
         </>
       ) : (
         <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground" />
@@ -115,6 +132,7 @@ export const nodeTypes = {
   trigger: AutomationNode,
   send_message: AutomationNode,
   condition: AutomationNode,
+  random_split: AutomationNode,
   delay: AutomationNode,
   add_tag: AutomationNode,
   remove_tag: AutomationNode,

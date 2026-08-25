@@ -5,6 +5,7 @@ export type FlowNodeType =
   | "trigger"
   | "send_message"
   | "condition"
+  | "random_split"
   | "delay"
   | "add_tag"
   | "remove_tag"
@@ -38,6 +39,12 @@ export interface ConditionNodeData {
   value: string;
   customFieldKey?: string; // obrigatório quando field === "custom_field"
   // Aresta com sourceHandle "true" segue por aqui, "false" pelo outro ramo.
+}
+
+// Aresta com sourceHandle "a" segue com probabilidade `splitPercent`% dos
+// runs, "b" com o restante — sorteado a cada execução (Math.random()).
+export interface RandomSplitNodeData {
+  splitPercent: number; // 0-100, chance de seguir pelo ramo A
 }
 
 export interface DelayNodeData {
@@ -75,6 +82,7 @@ export type FlowNodeData =
   | TriggerNodeData
   | SendMessageNodeData
   | ConditionNodeData
+  | RandomSplitNodeData
   | DelayNodeData
   | TagNodeData
   | AiReplyNodeData

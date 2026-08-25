@@ -28,6 +28,10 @@ const conditionDataSchema = z.object({
   customFieldKey: z.string().optional(),
 });
 
+const randomSplitDataSchema = z.object({
+  splitPercent: z.number().min(0).max(100),
+});
+
 const delayDataSchema = z.object({
   amount: z.number().positive(),
   unit: z.enum(["seconds", "minutes", "hours"]),
@@ -59,6 +63,7 @@ const flowNodeSchema = z.discriminatedUnion("type", [
   z.object({ id: z.string().min(1), type: z.literal("trigger"), position: positionSchema, data: triggerDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("send_message"), position: positionSchema, data: sendMessageDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("condition"), position: positionSchema, data: conditionDataSchema }),
+  z.object({ id: z.string().min(1), type: z.literal("random_split"), position: positionSchema, data: randomSplitDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("delay"), position: positionSchema, data: delayDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("add_tag"), position: positionSchema, data: tagDataSchema }),
   z.object({ id: z.string().min(1), type: z.literal("remove_tag"), position: positionSchema, data: tagDataSchema }),

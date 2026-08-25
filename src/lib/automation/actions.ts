@@ -7,6 +7,7 @@ import type {
   FlowNode,
   SendMessageNodeData,
   ConditionNodeData,
+  RandomSplitNodeData,
   DelayNodeData,
   TagNodeData,
   AiReplyNodeData,
@@ -31,6 +32,8 @@ export async function executeNode(
       return executeSendMessage(node.data as SendMessageNodeData, ctx);
     case "condition":
       return executeCondition(node.data as ConditionNodeData, ctx);
+    case "random_split":
+      return executeRandomSplit(node.data as RandomSplitNodeData);
     case "delay":
       return executeDelay(node.id, node.data as DelayNodeData);
     case "add_tag":
@@ -149,6 +152,12 @@ async function executeCondition(
   if (data.operator === "not_equals") matched = !matched;
 
   return { action: "continue", branch: matched ? "true" : "false" };
+}
+
+function executeRandomSplit(data: RandomSplitNodeData): NodeExecutionResult {
+  const splitPercent = Math.min(100, Math.max(0, data.splitPercent ?? 50));
+  const branch = Math.random() * 100 < splitPercent ? "a" : "b";
+  return { action: "continue", branch };
 }
 
 function executeDelay(nodeId: string, data: DelayNodeData): NodeExecutionResult {

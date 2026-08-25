@@ -36,6 +36,7 @@ const PALETTE: FlowNodeType[] = [
   "send_message",
   "ask_question",
   "condition",
+  "random_split",
   "delay",
   "add_tag",
   "remove_tag",
@@ -50,6 +51,8 @@ function defaultDataFor(type: FlowNodeType): FlowNodeData {
       return { messageType: "text", text: "" };
     case "condition":
       return { field: "message_contains", operator: "contains", value: "" };
+    case "random_split":
+      return { splitPercent: 50 };
     case "delay":
       return { amount: 1, unit: "minutes" };
     case "add_tag":
