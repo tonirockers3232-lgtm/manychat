@@ -33,10 +33,10 @@ export default async function DashboardHomePage() {
     ]);
 
   const stats = [
-    { label: "Contas conectadas", value: accountsCount ?? 0, icon: Instagram, href: "/dashboard/instagram" },
-    { label: "Conversas abertas", value: openConversations ?? 0, icon: Inbox, href: "/dashboard/inbox" },
-    { label: "Automações ativas", value: activeAutomations ?? 0, icon: Workflow, href: "/dashboard/automations" },
-    { label: "Contatos", value: contactsCount ?? 0, icon: Users, href: "/dashboard/contacts" },
+    { label: "Contas conectadas", value: accountsCount ?? 0, icon: Instagram, href: "/dashboard/instagram", chip: "bg-pink-100 text-pink-600" },
+    { label: "Conversas abertas", value: openConversations ?? 0, icon: Inbox, href: "/dashboard/inbox", chip: "bg-cyan-100 text-cyan-600" },
+    { label: "Automações ativas", value: activeAutomations ?? 0, icon: Workflow, href: "/dashboard/automations", chip: "bg-violet-100 text-violet-600" },
+    { label: "Contatos", value: contactsCount ?? 0, icon: Users, href: "/dashboard/contacts", chip: "bg-emerald-100 text-emerald-600" },
   ];
 
   return (
@@ -49,15 +49,17 @@ export default async function DashboardHomePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon, href }) => (
+        {stats.map(({ label, value, icon: Icon, href, chip }) => (
           <Link key={label} href={href}>
-            <Card className="transition-colors hover:border-primary/50">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${chip}`}>
+                  <Icon className="h-4 w-4" />
+                </span>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{value}</p>
+                <p className="text-3xl font-bold tabular-nums">{value}</p>
               </CardContent>
             </Card>
           </Link>

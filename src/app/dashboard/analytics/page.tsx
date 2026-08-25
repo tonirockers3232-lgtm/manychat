@@ -5,6 +5,7 @@ import { StatTile } from "@/components/analytics/stat-tile";
 import { StatusFunnelChart } from "@/components/analytics/status-funnel-chart";
 import { AutomationRanking } from "@/components/analytics/automation-ranking";
 import { MessagesLineChart } from "@/components/analytics/messages-line-chart";
+import { Users, UserPlus, Send, TrendingUp, Headset } from "lucide-react";
 
 export default async function AnalyticsPage() {
   const organization = await getCurrentOrganization();
@@ -18,11 +19,26 @@ export default async function AnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <StatTile label="Contatos" value={summary.totalContacts.toLocaleString("pt-BR")} />
-        <StatTile label="Novos contatos (30d)" value={summary.newContactsLast30d.toLocaleString("pt-BR")} />
-        <StatTile label="Mensagens enviadas (30d)" value={summary.outboundMessagesLast30d.toLocaleString("pt-BR")} />
-        <StatTile label="Taxa de conversão" value={`${(summary.conversionRate * 100).toFixed(0)}%`} />
-        <StatTile label="Atendimentos humanos" value={summary.handoffCount.toLocaleString("pt-BR")} />
+        <StatTile label="Contatos" value={summary.totalContacts.toLocaleString("pt-BR")} icon={Users} color="violet" />
+        <StatTile
+          label="Novos contatos (30d)"
+          value={summary.newContactsLast30d.toLocaleString("pt-BR")}
+          icon={UserPlus}
+          color="emerald"
+        />
+        <StatTile
+          label="Mensagens enviadas (30d)"
+          value={summary.outboundMessagesLast30d.toLocaleString("pt-BR")}
+          icon={Send}
+          color="blue"
+        />
+        <StatTile
+          label="Taxa de conversão"
+          value={`${(summary.conversionRate * 100).toFixed(0)}%`}
+          icon={TrendingUp}
+          color="pink"
+        />
+        <StatTile label="Atendimentos humanos" value={summary.handoffCount.toLocaleString("pt-BR")} icon={Headset} color="amber" />
       </div>
 
       <Card>

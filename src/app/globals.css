@@ -12,26 +12,27 @@
  */
 
 :root {
-  --radius: 0.6rem;
-  --background: 0 0% 100%;
+  --radius: 0.85rem;
+  --background: 240 20% 99%;
   --foreground: 240 10% 4%;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 4%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 4%;
-  --primary: 243 75% 59%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 5% 96%;
-  --secondary-foreground: 240 6% 10%;
-  --muted: 240 5% 96%;
+  --primary: 258 90% 66%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 250 30% 96%;
+  --secondary-foreground: 258 40% 30%;
+  --muted: 250 20% 96%;
   --muted-foreground: 240 4% 46%;
-  --accent: 240 5% 96%;
-  --accent-foreground: 240 6% 10%;
+  --accent: 250 30% 96%;
+  --accent-foreground: 258 40% 30%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 6% 90%;
-  --input: 240 6% 90%;
-  --ring: 243 75% 59%;
+  --border: 240 10% 91%;
+  --input: 240 10% 91%;
+  --ring: 258 90% 66%;
+  --sidebar: 250 35% 98%;
 }
 
 @theme inline {
@@ -59,6 +60,7 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar));
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

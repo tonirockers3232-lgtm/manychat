@@ -4,7 +4,7 @@ import { listAutomations } from "@/lib/data/automations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Workflow, Plus } from "lucide-react";
+import { Workflow, Plus, MessageCircle, AtSign, UserPlus, Repeat2, Sparkles, Rocket } from "lucide-react";
 
 const STATUS_VARIANT = {
   active: "success",
@@ -21,6 +21,24 @@ const TRIGGER_LABEL = {
   story_reply: "Resposta a Story",
   story_mention: "Menção em Story",
   manual: "Início manual (sequência)",
+};
+
+const TRIGGER_ICON = {
+  dm_keyword: MessageCircle,
+  comment_keyword: AtSign,
+  new_contact: UserPlus,
+  story_reply: Repeat2,
+  story_mention: Sparkles,
+  manual: Rocket,
+};
+
+const TRIGGER_CHIP = {
+  dm_keyword: "bg-violet-100 text-violet-600",
+  comment_keyword: "bg-blue-100 text-blue-600",
+  new_contact: "bg-emerald-100 text-emerald-600",
+  story_reply: "bg-pink-100 text-pink-600",
+  story_mention: "bg-amber-100 text-amber-600",
+  manual: "bg-cyan-100 text-cyan-600",
 };
 
 export default async function AutomationsPage() {
@@ -43,24 +61,34 @@ export default async function AutomationsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {automations.map((automation) => (
-          <Link key={automation.id} href={`/dashboard/automations/${automation.id}`}>
-            <Card className="h-full transition-colors hover:border-primary/50">
-              <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                <div>
-                  <CardTitle className="text-base">{automation.name}</CardTitle>
-                  <p className="mt-1 text-xs text-muted-foreground">{TRIGGER_LABEL[automation.trigger_type]}</p>
-                </div>
-                <Badge variant={STATUS_VARIANT[automation.status]}>{STATUS_LABEL[automation.status]}</Badge>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  {automation.flow_definition.nodes.length} nós · {automation.flow_definition.edges.length} conexões
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+        {automations.map((automation) => {
+          const TriggerIcon = TRIGGER_ICON[automation.trigger_type];
+          return (
+            <Link key={automation.id} href={`/dashboard/automations/${automation.id}`}>
+              <Card className="h-full">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${TRIGGER_CHIP[automation.trigger_type]}`}
+                    >
+                      <TriggerIcon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <CardTitle className="text-base">{automation.name}</CardTitle>
+                      <p className="mt-1 text-xs text-muted-foreground">{TRIGGER_LABEL[automation.trigger_type]}</p>
+                    </div>
+                  </div>
+                  <Badge variant={STATUS_VARIANT[automation.status]}>{STATUS_LABEL[automation.status]}</Badge>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    {automation.flow_definition.nodes.length} nós · {automation.flow_definition.edges.length} conexões
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
 
         {automations.length === 0 && (
           <Card className="border-dashed sm:col-span-2 lg:col-span-3">
