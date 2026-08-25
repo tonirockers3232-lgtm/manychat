@@ -61,7 +61,9 @@ export default async function InstagramAccountsPage({
               <CardHeader className="flex flex-row items-center gap-3 space-y-0">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={account.profile_pic_url ?? undefined} />
-                  <AvatarFallback>{(account.username ?? "IG").slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-amber-400 font-semibold text-white">
+                    {(account.username ?? "IG").slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <CardTitle className="truncate text-sm">@{account.username ?? "sem_usuario"}</CardTitle>

@@ -12,7 +12,7 @@ export default async function InboxLayout({ children }: { children: ReactNode })
 
   return (
     <div className="flex h-[calc(100vh-3.5rem-3rem)] gap-4">
-      <aside className="w-80 shrink-0 overflow-y-auto rounded-lg border bg-background">
+      <aside className="w-80 shrink-0 overflow-y-auto rounded-2xl border bg-background shadow-sm">
         {conversations.length === 0 && (
           <p className="p-6 text-center text-sm text-muted-foreground">Nenhuma conversa ainda.</p>
         )}
@@ -22,11 +22,13 @@ export default async function InboxLayout({ children }: { children: ReactNode })
             <Link
               key={conv.id}
               href={`/dashboard/inbox/${conv.id}`}
-              className="flex items-center gap-3 border-b px-4 py-3 hover:bg-muted/50"
+              className="flex items-center gap-3 border-b px-4 py-3 transition-colors last:border-0 hover:bg-muted/60"
             >
-              <Avatar>
+              <Avatar className="ring-2 ring-transparent transition-all">
                 <AvatarImage src={contact?.profile_pic_url ?? undefined} />
-                <AvatarFallback>{(contact?.username ?? "??").slice(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-fuchsia-500 font-semibold text-white">
+                  {(contact?.username ?? "??").slice(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">@{contact?.username ?? "desconhecido"}</p>
@@ -38,7 +40,7 @@ export default async function InboxLayout({ children }: { children: ReactNode })
           );
         })}
       </aside>
-      <section className="flex-1 overflow-hidden rounded-lg border bg-background">{children}</section>
+      <section className="flex-1 overflow-hidden rounded-2xl border bg-background shadow-sm">{children}</section>
     </div>
   );
 }

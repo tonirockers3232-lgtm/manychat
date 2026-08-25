@@ -17,19 +17,19 @@ import type {
   StartAutomationNodeData,
 } from "@/types/automation";
 
-const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: string }> = {
-  trigger: { label: "Gatilho", icon: Zap, color: "border-amber-400 bg-amber-50" },
-  send_message: { label: "Enviar mensagem", icon: MessageSquare, color: "border-blue-400 bg-blue-50" },
-  condition: { label: "Condição", icon: GitBranch, color: "border-purple-400 bg-purple-50" },
-  random_split: { label: "Divisão aleatória", icon: Shuffle, color: "border-indigo-400 bg-indigo-50" },
-  delay: { label: "Aguardar", icon: Clock, color: "border-orange-400 bg-orange-50" },
-  add_tag: { label: "Adicionar tag", icon: Tag, color: "border-emerald-400 bg-emerald-50" },
-  remove_tag: { label: "Remover tag", icon: TagIcon, color: "border-rose-400 bg-rose-50" },
-  ai_reply: { label: "Resposta com IA", icon: Sparkles, color: "border-violet-400 bg-violet-50" },
-  ask_question: { label: "Pergunta", icon: HelpCircle, color: "border-cyan-400 bg-cyan-50" },
-  reply_comment: { label: "Responder comentário", icon: Reply, color: "border-sky-400 bg-sky-50" },
-  human_handoff: { label: "Atendimento humano", icon: UserCheck, color: "border-red-400 bg-red-50" },
-  start_automation: { label: "Iniciar automação", icon: Rocket, color: "border-teal-400 bg-teal-50" },
+const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: string; chip: string }> = {
+  trigger: { label: "Gatilho", icon: Zap, color: "border-amber-400 bg-amber-50", chip: "bg-amber-400 text-white" },
+  send_message: { label: "Enviar mensagem", icon: MessageSquare, color: "border-blue-400 bg-blue-50", chip: "bg-blue-500 text-white" },
+  condition: { label: "Condição", icon: GitBranch, color: "border-purple-400 bg-purple-50", chip: "bg-purple-500 text-white" },
+  random_split: { label: "Divisão aleatória", icon: Shuffle, color: "border-indigo-400 bg-indigo-50", chip: "bg-indigo-500 text-white" },
+  delay: { label: "Aguardar", icon: Clock, color: "border-orange-400 bg-orange-50", chip: "bg-orange-500 text-white" },
+  add_tag: { label: "Adicionar tag", icon: Tag, color: "border-emerald-400 bg-emerald-50", chip: "bg-emerald-500 text-white" },
+  remove_tag: { label: "Remover tag", icon: TagIcon, color: "border-rose-400 bg-rose-50", chip: "bg-rose-500 text-white" },
+  ai_reply: { label: "Resposta com IA", icon: Sparkles, color: "border-violet-400 bg-violet-50", chip: "bg-violet-500 text-white" },
+  ask_question: { label: "Pergunta", icon: HelpCircle, color: "border-cyan-400 bg-cyan-50", chip: "bg-cyan-500 text-white" },
+  reply_comment: { label: "Responder comentário", icon: Reply, color: "border-sky-400 bg-sky-50", chip: "bg-sky-500 text-white" },
+  human_handoff: { label: "Atendimento humano", icon: UserCheck, color: "border-red-400 bg-red-50", chip: "bg-red-500 text-white" },
+  start_automation: { label: "Iniciar automação", icon: Rocket, color: "border-teal-400 bg-teal-50", chip: "bg-teal-500 text-white" },
 };
 
 const UNCONDITIONAL_TRIGGER_LABEL: Partial<Record<TriggerNodeData["triggerType"], string>> = {
@@ -97,16 +97,18 @@ export function AutomationNode({ data, type, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        "w-56 rounded-lg border-2 bg-background p-3 shadow-sm transition-shadow",
+        "w-56 rounded-xl border-2 bg-background p-3 shadow-sm transition-shadow hover:shadow-md",
         meta.color,
         selected && "ring-2 ring-primary ring-offset-1"
       )}
     >
       {nodeType !== "trigger" && <Handle type="target" position={Position.Top} className="!bg-muted-foreground" />}
 
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-foreground/70">
-        <Icon className="h-3.5 w-3.5" />
-        {meta.label}
+      <div className="flex items-center gap-2">
+        <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-md", meta.chip)}>
+          <Icon className="h-3 w-3" />
+        </span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-foreground/70">{meta.label}</span>
       </div>
       <p className="mt-1.5 truncate text-sm text-foreground" title={summaryText}>
         {summaryText}

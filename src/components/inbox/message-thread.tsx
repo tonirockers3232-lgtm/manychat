@@ -53,13 +53,15 @@ export function MessageThread({ conversationId, contactUsername, automationPause
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex-1 space-y-3 overflow-y-auto bg-muted/20 p-4">
         {initialMessages.map((message) => (
           <div key={message.id} className={cn("flex", message.direction === "outbound" ? "justify-end" : "justify-start")}>
             <div
               className={cn(
-                "max-w-[70%] rounded-lg px-3 py-2 text-sm",
-                message.direction === "outbound" ? "bg-primary text-primary-foreground" : "bg-muted"
+                "max-w-[70%] rounded-2xl px-3.5 py-2 text-sm shadow-sm",
+                message.direction === "outbound"
+                  ? "rounded-br-md bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white"
+                  : "rounded-bl-md bg-background"
               )}
             >
               <p>{message.content}</p>

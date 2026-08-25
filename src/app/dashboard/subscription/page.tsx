@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { OrgPlan } from "@/types/database";
 
-const PLANS: Array<{ id: OrgPlan; name: string; price: string; features: string[] }> = [
+const PLANS: Array<{ id: OrgPlan; name: string; price: string; features: string[]; highlight?: boolean }> = [
   { id: "free", name: "Free", price: "R$ 0", features: ["1 conta do Instagram", "1 automação ativa", "100 contatos"] },
   { id: "starter", name: "Starter", price: "R$ 97/mês", features: ["3 contas do Instagram", "10 automações", "2.000 contatos", "Respostas com IA"] },
-  { id: "pro", name: "Pro", price: "R$ 197/mês", features: ["10 contas do Instagram", "Automações ilimitadas", "10.000 contatos", "Prioridade no suporte"] },
+  { id: "pro", name: "Pro", price: "R$ 197/mês", features: ["10 contas do Instagram", "Automações ilimitadas", "10.000 contatos", "Prioridade no suporte"], highlight: true },
   { id: "scale", name: "Scale", price: "Sob consulta", features: ["Contas ilimitadas", "Multiempresa", "SLA dedicado"] },
 ];
 
@@ -36,7 +37,19 @@ export default async function SubscriptionPage() {
         {PLANS.map((plan) => {
           const isCurrent = subscription?.plan === plan.id;
           return (
-            <Card key={plan.id} className={isCurrent ? "border-primary" : undefined}>
+            <Card
+              key={plan.id}
+              className={cn(
+                "relative",
+                isCurrent && "border-primary",
+                plan.highlight && !isCurrent && "border-primary/40 shadow-md"
+              )}
+            >
+              {plan.highlight && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+                  Mais popular
+                </span>
+              )}
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{plan.name}</CardTitle>

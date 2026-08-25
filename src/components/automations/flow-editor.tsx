@@ -147,9 +147,9 @@ export function FlowEditor({
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) as unknown as FlowNode | undefined;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem-3rem)] gap-0 overflow-hidden rounded-lg border">
+    <div className="flex h-[calc(100vh-3.5rem-3rem)] gap-0 overflow-hidden rounded-2xl border shadow-sm">
       <aside className="w-56 shrink-0 space-y-1 overflow-y-auto border-r bg-background p-3">
-        <p className="mb-2 px-1 text-xs font-semibold uppercase text-muted-foreground">Adicionar nó</p>
+        <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Adicionar nó</p>
         {PALETTE.map((type) => {
           const meta = NODE_META[type];
           const Icon = meta.icon;
@@ -157,9 +157,11 @@ export function FlowEditor({
             <button
               key={type}
               onClick={() => addNode(type)}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm font-medium transition-colors hover:bg-muted"
             >
-              <Icon className="h-4 w-4 text-muted-foreground" />
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${meta.chip}`}>
+                <Icon className="h-3.5 w-3.5" />
+              </span>
               {meta.label}
             </button>
           );
@@ -167,9 +169,9 @@ export function FlowEditor({
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between gap-2 border-b bg-background px-4 py-2">
+        <div className="flex items-center justify-between gap-2 border-b bg-background px-4 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{automation.name}</span>
+            <span className="text-sm font-semibold">{automation.name}</span>
           </div>
           <div className="flex items-center gap-2">
             <Select value={status} onValueChange={(v) => handleStatusChange(v as AutomationStatus)}>

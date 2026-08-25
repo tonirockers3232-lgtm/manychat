@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Zap } from "lucide-react";
 
 const initialState: AuthActionState = {};
 
@@ -14,8 +15,15 @@ export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
-      <Card className="w-full max-w-sm">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-violet-50 via-background to-fuchsia-50 px-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 flex items-center justify-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-sm">
+            <Zap className="h-5 w-5 fill-white" />
+          </span>
+          <span className="text-xl font-bold tracking-tight">InstaFlow</span>
+        </div>
+        <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-xl">Entrar</CardTitle>
           <CardDescription>Acesse o painel da sua conta</CardDescription>
@@ -42,7 +50,8 @@ export default function LoginPage() {
             </Link>
           </p>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </main>
   );
 }
