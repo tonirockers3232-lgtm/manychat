@@ -146,7 +146,13 @@ export interface Message {
 }
 
 export type AutomationStatus = "draft" | "active" | "paused";
-export type AutomationTriggerType = "dm_keyword" | "comment_keyword" | "new_contact" | "story_reply" | "manual";
+export type AutomationTriggerType =
+  | "dm_keyword"
+  | "comment_keyword"
+  | "new_contact"
+  | "story_reply"
+  | "story_mention"
+  | "manual";
 
 export interface AutomationTriggerConfig {
   keywords?: string[];

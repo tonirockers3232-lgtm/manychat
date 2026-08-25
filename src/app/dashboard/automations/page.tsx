@@ -18,7 +18,8 @@ const TRIGGER_LABEL = {
   dm_keyword: "Palavra-chave em DM",
   comment_keyword: "Palavra-chave em comentário",
   new_contact: "Novo contato",
-  story_reply: "Resposta a story",
+  story_reply: "Resposta a Story",
+  story_mention: "Menção em Story",
   manual: "Manual",
 };
 

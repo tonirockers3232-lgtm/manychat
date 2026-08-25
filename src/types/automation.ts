@@ -20,7 +20,7 @@ export interface FlowNodeBase {
 }
 
 export interface TriggerNodeData {
-  triggerType: "dm_keyword" | "comment_keyword" | "new_contact" | "story_reply" | "manual";
+  triggerType: "dm_keyword" | "comment_keyword" | "new_contact" | "story_reply" | "story_mention" | "manual";
   keywords?: string[];
   matchType?: "exact" | "contains";
 }

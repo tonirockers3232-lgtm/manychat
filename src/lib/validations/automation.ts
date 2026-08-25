@@ -9,7 +9,7 @@ import { z } from "zod";
 const positionSchema = z.object({ x: z.number(), y: z.number() });
 
 const triggerDataSchema = z.object({
-  triggerType: z.enum(["dm_keyword", "comment_keyword", "new_contact", "story_reply", "manual"]),
+  triggerType: z.enum(["dm_keyword", "comment_keyword", "new_contact", "story_reply", "story_mention", "manual"]),
   keywords: z.array(z.string()).optional(),
   matchType: z.enum(["exact", "contains"]).optional(),
 });

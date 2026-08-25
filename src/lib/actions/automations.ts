@@ -7,10 +7,12 @@ import { flowDefinitionSchema } from "@/lib/validations/automation";
 import type { AutomationStatus, AutomationTriggerType } from "@/types/database";
 import type { FlowDefinition } from "@/types/automation";
 
-const DEFAULT_FLOW: FlowDefinition = {
-  nodes: [{ id: "trigger-1", type: "trigger", position: { x: 250, y: 0 }, data: { triggerType: "dm_keyword", keywords: [], matchType: "contains" } }],
-  edges: [],
-};
+function defaultFlowFor(triggerType: AutomationTriggerType): FlowDefinition {
+  return {
+    nodes: [{ id: "trigger-1", type: "trigger", position: { x: 250, y: 0 }, data: { triggerType, keywords: [], matchType: "contains" } }],
+    edges: [],
+  };
+}
 
 export async function createAutomation(params: { name: string; triggerType: AutomationTriggerType; instagramAccountId: string | null }) {
   const organization = await getCurrentOrganization();
@@ -29,7 +31,7 @@ export async function createAutomation(params: { name: string; triggerType: Auto
       name: params.name,
       trigger_type: params.triggerType,
       trigger_config: {},
-      flow_definition: DEFAULT_FLOW,
+      flow_definition: defaultFlowFor(params.triggerType),
       created_by: user?.id,
     })
     .select()

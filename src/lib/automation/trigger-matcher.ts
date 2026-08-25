@@ -52,17 +52,35 @@ export async function findMatchingAutomation(params: {
   return null;
 }
 
-export async function findNewContactAutomation(instagramAccountId: string): Promise<Automation | null> {
+// Gatilhos que disparam incondicionalmente (sem palavra-chave) — o próprio
+// evento já é específico o bastante: primeira mensagem, resposta a Story,
+// menção em Story. A primeira automação ativa desse tipo cadastrada "ganha".
+async function findUnconditionalAutomation(
+  instagramAccountId: string,
+  triggerType: AutomationTriggerType
+): Promise<Automation | null> {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("automations")
     .select("*")
     .eq("instagram_account_id", instagramAccountId)
     .eq("status", "active")
-    .eq("trigger_type", "new_contact")
+    .eq("trigger_type", triggerType)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 
   return data ?? null;
+}
+
+export function findNewContactAutomation(instagramAccountId: string): Promise<Automation | null> {
+  return findUnconditionalAutomation(instagramAccountId, "new_contact");
+}
+
+export function findStoryReplyAutomation(instagramAccountId: string): Promise<Automation | null> {
+  return findUnconditionalAutomation(instagramAccountId, "story_reply");
+}
+
+export function findStoryMentionAutomation(instagramAccountId: string): Promise<Automation | null> {
+  return findUnconditionalAutomation(instagramAccountId, "story_mention");
 }

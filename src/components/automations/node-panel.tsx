@@ -76,7 +76,17 @@ export function NodePanel({ node, customFields, onChange, onDelete, onClose }: N
   );
 }
 
+const UNCONDITIONAL_TRIGGERS: TriggerNodeData["triggerType"][] = ["new_contact", "story_reply", "story_mention"];
+
 function TriggerFields({ data, onChange }: { data: TriggerNodeData; onChange: (d: TriggerNodeData) => void }) {
+  if (UNCONDITIONAL_TRIGGERS.includes(data.triggerType)) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Esse gatilho dispara para qualquer evento desse tipo — não precisa de palavra-chave.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">

@@ -15,6 +15,8 @@ const TRIGGER_OPTIONS: Array<{ value: AutomationTriggerType; label: string; desc
   { value: "dm_keyword", label: "Palavra-chave em DM", description: "Dispara quando o contato envia uma DM com uma palavra específica." },
   { value: "comment_keyword", label: "Palavra-chave em comentário", description: "Dispara quando alguém comenta um post/reel com uma palavra específica." },
   { value: "new_contact", label: "Novo contato", description: "Dispara na primeira mensagem de um novo contato." },
+  { value: "story_reply", label: "Resposta a Story", description: "Dispara quando alguém responde a um Story seu." },
+  { value: "story_mention", label: "Menção em Story", description: "Dispara quando alguém marca sua conta num Story." },
 ];
 
 export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; username: string | null }> }) {

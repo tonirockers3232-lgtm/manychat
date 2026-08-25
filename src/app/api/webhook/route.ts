@@ -7,9 +7,15 @@ import {
   type InstagramWebhookPayload,
 } from "@/lib/meta/webhook";
 import { getOrCreateContact, getOrCreateConversation } from "@/lib/data/contacts";
-import { findMatchingAutomation, findNewContactAutomation } from "@/lib/automation/trigger-matcher";
+import {
+  findMatchingAutomation,
+  findNewContactAutomation,
+  findStoryReplyAutomation,
+  findStoryMentionAutomation,
+} from "@/lib/automation/trigger-matcher";
 import { startAutomationRun, resumeFromReply } from "@/lib/automation/engine";
 import type { RunContext } from "@/lib/automation/types";
+import type { InstagramMessagingEvent } from "@/lib/meta/webhook";
 import type { Automation, AutomationRun, InstagramAccount } from "@/types/database";
 
 // GET /api/webhook — handshake de verificação (Seção 3 do app Meta).
@@ -57,11 +63,14 @@ export async function POST(request: NextRequest) {
     if (!account) continue; // conta desconectada ou de outro app — ignora
 
     for (const event of entry.messaging ?? []) {
-      if (event.message?.is_echo) continue; // mensagem enviada pela própria página
-      if (!event.message?.text) continue;
+      if (!event.message || event.message.is_echo) continue; // mensagem enviada pela própria página
+      // Menção em Story não tem `text`, só attachments — sem essa exceção o
+      // guard de baixo (pensado pra DM normal) descartaria o evento inteiro.
+      const hasStoryMention = event.message.attachments?.some((a) => a.type === "story_mention");
+      if (!event.message.text && !hasStoryMention) continue;
 
-      await handleIncomingMessage(admin, account, event.sender.id, event.message.mid, event.message.text).catch(
-        (err) => console.error("[webhook] handleIncomingMessage", err)
+      await handleIncomingMessage(admin, account, event.sender.id, event.message).catch((err) =>
+        console.error("[webhook] handleIncomingMessage", err)
       );
     }
 
@@ -82,9 +91,12 @@ async function handleIncomingMessage(
   admin: ReturnType<typeof createAdminClient>,
   account: InstagramAccount,
   senderIgsid: string,
-  mid: string,
-  text: string
+  message: NonNullable<InstagramMessagingEvent["message"]>
 ) {
+  const storyMention = message.attachments?.find((a) => a.type === "story_mention");
+  const isStoryReply = Boolean(message.reply_to?.story);
+  const text = message.text ?? "";
+
   const { contact, isNew } = await getOrCreateContact({
     organizationId: account.organization_id,
     instagramAccountId: account.id,
@@ -107,9 +119,12 @@ async function handleIncomingMessage(
         conversation_id: conversation.id,
         direction: "inbound",
         sender_type: "contact",
-        message_type: "text",
-        content: text,
-        instagram_message_id: mid,
+        message_type: storyMention ? "image" : "text",
+        content: storyMention ? null : text,
+        // A URL da mídia da Story expira em 24h — guardamos só o link (é o
+        // que a Meta permite reter), nunca baixamos/cacheamos o arquivo.
+        media_url: storyMention?.payload.url ?? null,
+        instagram_message_id: message.mid,
         status: "delivered",
       },
       { onConflict: "instagram_message_id", ignoreDuplicates: true }
@@ -140,31 +155,35 @@ async function handleIncomingMessage(
   // Se o contato tem um run "waiting" parado num nó "Pergunta", esta mensagem
   // é a resposta esperada, não um novo gatilho — sem essa checagem, o texto
   // digitado seria testado contra as palavras-chave e provavelmente ignorado.
-  const { data: waitingRun } = await admin
-    .from("automation_runs")
-    .select("*, automations(*)")
-    .eq("contact_id", contact.id)
-    .eq("status", "waiting")
-    .order("started_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Não se aplica a menção em Story: não há texto nenhum pra usar como resposta.
+  if (!storyMention) {
+    const { data: waitingRun } = await admin
+      .from("automation_runs")
+      .select("*, automations(*)")
+      .eq("contact_id", contact.id)
+      .eq("status", "waiting")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (waitingRun) {
-    const { automations: automation, ...run } = waitingRun as unknown as AutomationRun & { automations: Automation };
-    const currentNode = automation.flow_definition.nodes.find((n) => n.id === run.current_node_id);
-    if (currentNode?.type === "ask_question") {
-      await resumeFromReply(run, automation, ctx, text);
-      return;
+    if (waitingRun) {
+      const { automations: automation, ...run } = waitingRun as unknown as AutomationRun & { automations: Automation };
+      const currentNode = automation.flow_definition.nodes.find((n) => n.id === run.current_node_id);
+      if (currentNode?.type === "ask_question") {
+        await resumeFromReply(run, automation, ctx, text);
+        return;
+      }
     }
   }
 
-  const automation = isNew
-    ? (await findNewContactAutomation(account.id)) ?? (await findMatchingAutomation({
-        instagramAccountId: account.id,
-        triggerType: "dm_keyword",
-        text,
-      }))
-    : await findMatchingAutomation({ instagramAccountId: account.id, triggerType: "dm_keyword", text });
+  const automation = storyMention
+    ? await findStoryMentionAutomation(account.id)
+    : isStoryReply
+      ? await findStoryReplyAutomation(account.id)
+      : isNew
+        ? (await findNewContactAutomation(account.id)) ??
+          (await findMatchingAutomation({ instagramAccountId: account.id, triggerType: "dm_keyword", text }))
+        : await findMatchingAutomation({ instagramAccountId: account.id, triggerType: "dm_keyword", text });
 
   if (automation) await startAutomationRun(automation, ctx);
 }

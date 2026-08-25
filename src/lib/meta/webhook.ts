@@ -54,12 +54,17 @@ export interface InstagramMessagingEvent {
     mid: string;
     text?: string;
     is_echo?: boolean;
+    // attachments[].type "story_mention" é como uma menção em Story chega —
+    // sem `text`, só a URL da mídia (CDN, expira em 24h junto com o Story).
     attachments?: Array<{ type: string; payload: { url?: string } }>;
     // Presente quando a mensagem é a resposta a um botão de quick reply que
     // enviamos — `text` já traz o título do botão, então o resto do motor
     // trata como uma resposta de texto normal; `quick_reply.payload` fica
     // disponível caso algum nó futuro precise diferenciar de texto livre.
     quick_reply?: { payload: string };
+    // Presente quando a mensagem é uma resposta a um Story nosso — `text` traz
+    // o texto da resposta normalmente, isso só identifica a origem.
+    reply_to?: { story: { url: string; id: string } };
   };
 }
 

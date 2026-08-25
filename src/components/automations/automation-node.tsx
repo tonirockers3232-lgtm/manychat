@@ -28,10 +28,18 @@ const NODE_META: Record<FlowNodeType, { label: string; icon: typeof Zap; color: 
   human_handoff: { label: "Atendimento humano", icon: UserCheck, color: "border-red-400 bg-red-50" },
 };
 
+const UNCONDITIONAL_TRIGGER_LABEL: Partial<Record<TriggerNodeData["triggerType"], string>> = {
+  new_contact: "Novo contato",
+  story_reply: "Resposta a Story",
+  story_mention: "Menção em Story",
+};
+
 function summarize(type: FlowNodeType, data: FlowNodeData): string {
   switch (type) {
     case "trigger": {
       const d = data as TriggerNodeData;
+      const unconditionalLabel = UNCONDITIONAL_TRIGGER_LABEL[d.triggerType];
+      if (unconditionalLabel) return unconditionalLabel;
       return d.keywords?.length ? `Palavras: ${d.keywords.join(", ")}` : "Sem palavra-chave definida";
     }
     case "send_message":
