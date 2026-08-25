@@ -20,17 +20,20 @@ import type {
 } from "@/types/automation";
 import type { CustomField } from "@/types/database";
 import { NODE_META } from "./automation-node";
+import { PostPickerDialog, PostPreviewCard } from "./post-picker-dialog";
+import { DialogTrigger } from "@/components/ui/dialog";
 
 interface NodePanelProps {
   node: FlowNode;
   customFields: CustomField[];
   otherAutomations: Array<{ id: string; name: string }>;
+  instagramAccountId: string | null;
   onChange: (data: FlowNode["data"]) => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
-export function NodePanel({ node, customFields, otherAutomations, onChange, onDelete, onClose }: NodePanelProps) {
+export function NodePanel({ node, customFields, otherAutomations, instagramAccountId, onChange, onDelete, onClose }: NodePanelProps) {
   const meta = NODE_META[node.type];
 
   return (
@@ -42,7 +45,9 @@ export function NodePanel({ node, customFields, otherAutomations, onChange, onDe
         </Button>
       </div>
 
-      {node.type === "trigger" && <TriggerFields data={node.data as TriggerNodeData} onChange={onChange} />}
+      {node.type === "trigger" && (
+        <TriggerFields data={node.data as TriggerNodeData} instagramAccountId={instagramAccountId} onChange={onChange} />
+      )}
       {node.type === "send_message" && <SendMessageFields data={node.data as SendMessageNodeData} onChange={onChange} />}
       {node.type === "condition" && (
         <ConditionFields data={node.data as ConditionNodeData} customFields={customFields} onChange={onChange} />
@@ -91,7 +96,15 @@ export function NodePanel({ node, customFields, otherAutomations, onChange, onDe
 
 const UNCONDITIONAL_TRIGGERS: TriggerNodeData["triggerType"][] = ["new_contact", "story_reply", "story_mention", "manual"];
 
-function TriggerFields({ data, onChange }: { data: TriggerNodeData; onChange: (d: TriggerNodeData) => void }) {
+function TriggerFields({
+  data,
+  instagramAccountId,
+  onChange,
+}: {
+  data: TriggerNodeData;
+  instagramAccountId: string | null;
+  onChange: (d: TriggerNodeData) => void;
+}) {
   if (data.triggerType === "manual") {
     return (
       <p className="text-xs text-muted-foreground">
@@ -131,6 +144,62 @@ function TriggerFields({ data, onChange }: { data: TriggerNodeData; onChange: (d
           </SelectContent>
         </Select>
       </div>
+
+      {data.triggerType === "comment_keyword" && (
+        <div className="space-y-1.5">
+          <Label>Publicação</Label>
+          {data.mediaId ? (
+            <PostPreviewCard
+              thumbnail={data.mediaThumbnail}
+              caption={data.mediaCaption}
+              permalink={data.mediaPermalink}
+              onClear={() => onChange({ ...data, mediaId: undefined, mediaThumbnail: undefined, mediaCaption: undefined, mediaPermalink: undefined })}
+              triggerButton={
+                <PostPickerDialog
+                  instagramAccountId={instagramAccountId}
+                  onSelect={(media) =>
+                    onChange({
+                      ...data,
+                      mediaId: media.id,
+                      mediaThumbnail: media.thumbnail_url ?? media.media_url,
+                      mediaCaption: media.caption,
+                      mediaPermalink: media.permalink,
+                    })
+                  }
+                >
+                  <DialogTrigger asChild>
+                    <Button type="button" variant="ghost" size="sm" className="h-6 px-1.5 text-xs">
+                      Trocar
+                    </Button>
+                  </DialogTrigger>
+                </PostPickerDialog>
+              }
+            />
+          ) : (
+            <PostPickerDialog
+              instagramAccountId={instagramAccountId}
+              onSelect={(media) =>
+                onChange({
+                  ...data,
+                  mediaId: media.id,
+                  mediaThumbnail: media.thumbnail_url ?? media.media_url,
+                  mediaCaption: media.caption,
+                  mediaPermalink: media.permalink,
+                })
+              }
+            >
+              <DialogTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="w-full">
+                  Escolher uma publicação específica (opcional)
+                </Button>
+              </DialogTrigger>
+            </PostPickerDialog>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Sem escolher uma publicação, o gatilho dispara em comentários de qualquer post ou reel da conta.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -215,6 +215,7 @@ export function FlowEditor({
           node={selectedNode}
           customFields={customFields}
           otherAutomations={otherAutomations}
+          instagramAccountId={automation.instagram_account_id}
           onChange={updateSelectedNodeData}
           onDelete={deleteSelectedNode}
           onClose={() => setSelectedNodeId(null)}

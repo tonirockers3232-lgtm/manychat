@@ -11,5 +11,12 @@ export function deriveTriggerConfig(flow: FlowDefinition): Record<string, unknow
   const triggerNode = flow.nodes.find((n) => n.type === "trigger");
   if (!triggerNode) return {};
   const data = triggerNode.data as TriggerNodeData;
-  return { keywords: data.keywords ?? [], match_type: data.matchType ?? "contains" };
+  return {
+    keywords: data.keywords ?? [],
+    match_type: data.matchType ?? "contains",
+    // Só relevante pra comment_keyword — restringe o gatilho a um post/reel
+    // específico. Omitido (undefined) quando nenhum foi escolhido, mantendo
+    // o comportamento antigo de "qualquer post" sem precisar de migração.
+    ...(data.mediaId ? { media_id: data.mediaId } : {}),
+  };
 }

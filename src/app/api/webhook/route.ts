@@ -195,7 +195,7 @@ async function handleIncomingMessage(
 async function handleIncomingComment(
   admin: ReturnType<typeof createAdminClient>,
   account: InstagramAccount,
-  comment: { id: string; text: string; from: { id: string; username: string } }
+  comment: { id: string; text: string; from: { id: string; username: string }; media: { id: string } }
 ) {
   const { contact } = await getOrCreateContact({
     organizationId: account.organization_id,
@@ -235,6 +235,7 @@ async function handleIncomingComment(
     instagramAccountId: account.id,
     triggerType: "comment_keyword",
     text: comment.text,
+    mediaId: comment.media.id,
   });
   if (!automation) return;
 

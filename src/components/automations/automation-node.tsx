@@ -45,7 +45,11 @@ function summarize(type: FlowNodeType, data: FlowNodeData): string {
       const d = data as TriggerNodeData;
       const unconditionalLabel = UNCONDITIONAL_TRIGGER_LABEL[d.triggerType];
       if (unconditionalLabel) return unconditionalLabel;
-      return d.keywords?.length ? `Palavras: ${d.keywords.join(", ")}` : "Sem palavra-chave definida";
+      const keywordsLabel = d.keywords?.length ? `Palavras: ${d.keywords.join(", ")}` : "Sem palavra-chave definida";
+      if (d.triggerType === "comment_keyword" && d.mediaId) {
+        return `${keywordsLabel} · só neste post`;
+      }
+      return keywordsLabel;
     }
     case "send_message":
       return (data as SendMessageNodeData).text?.slice(0, 60) || "Sem texto definido";

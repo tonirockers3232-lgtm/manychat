@@ -21,10 +21,18 @@ export interface FlowNodeBase {
   position: { x: number; y: number };
 }
 
+// mediaId (só relevante em comment_keyword) restringe o gatilho a um post/reel
+// específico — sem ele, dispara em comentários de qualquer publicação (era o
+// único comportamento antes desse campo existir). Os outros campos `media*`
+// são só um retrato pra mostrar no painel; o motor sempre casa pelo mediaId.
 export interface TriggerNodeData {
   triggerType: "dm_keyword" | "comment_keyword" | "new_contact" | "story_reply" | "story_mention" | "manual";
   keywords?: string[];
   matchType?: "exact" | "contains";
+  mediaId?: string;
+  mediaThumbnail?: string;
+  mediaCaption?: string;
+  mediaPermalink?: string;
 }
 
 // Botões reais (Instagram quick replies), só em DM. Cada botão vira uma

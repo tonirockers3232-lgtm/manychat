@@ -12,6 +12,10 @@ const triggerDataSchema = z.object({
   triggerType: z.enum(["dm_keyword", "comment_keyword", "new_contact", "story_reply", "story_mention", "manual"]),
   keywords: z.array(z.string()).optional(),
   matchType: z.enum(["exact", "contains"]).optional(),
+  mediaId: z.string().optional(),
+  mediaThumbnail: z.string().optional(),
+  mediaCaption: z.string().optional(),
+  mediaPermalink: z.string().optional(),
 });
 
 const sendMessageDataSchema = z.object({

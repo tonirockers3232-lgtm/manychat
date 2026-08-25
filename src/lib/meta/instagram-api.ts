@@ -110,6 +110,35 @@ export async function subscribeAccountToWebhooks(accessToken: string): Promise<v
   }
 }
 
+export interface InstagramMedia {
+  id: string;
+  caption?: string;
+  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  media_url?: string;
+  thumbnail_url?: string; // presente em VIDEO/reels — media_url nem sempre renderiza como imagem
+  permalink: string;
+  timestamp: string;
+}
+
+// Lista os posts/reels mais recentes da conta conectada — usado pelo seletor
+// de post na configuração do gatilho "Palavra-chave em comentário". Capability
+// documentada como "Content publishing – Get and publish their media" pra
+// Instagram API with Instagram Login, coberta pelo escopo instagram_business_basic
+// que o app já pede no OAuth (não precisa de reconexão da conta).
+export async function listRecentMedia(accessToken: string, limit = 24): Promise<InstagramMedia[]> {
+  const params = new URLSearchParams({
+    fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp",
+    limit: String(limit),
+    access_token: accessToken,
+  });
+  const res = await fetch(`${GRAPH_BASE}/me/media?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Falha ao buscar publicações do Instagram: ${await res.text()}`);
+  }
+  const data = (await res.json()) as { data?: InstagramMedia[] };
+  return data.data ?? [];
+}
+
 export async function getInstagramProfile(accessToken: string): Promise<InstagramProfile> {
   const params = new URLSearchParams({
     fields: "user_id,username,name,profile_picture_url",

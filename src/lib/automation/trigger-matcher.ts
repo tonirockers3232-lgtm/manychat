@@ -15,10 +15,15 @@ export function normalize(value: string): string {
 // Retorna as automações ativas da conta cujo gatilho por palavra-chave bate
 // com o texto recebido (DM ou comentário). Primeira automação cadastrada que
 // casar "ganha" — evita disparar vários fluxos concorrentes pro mesmo evento.
+// `mediaId` (só presente pra comentário) desempata a favor de uma automação
+// configurada pra ESSE post/reel especificamente, mesmo que uma automação
+// "qualquer post" mais antiga também bata na mesma palavra-chave — senão a
+// genérica sempre ganharia da específica só por ter sido criada primeiro.
 export async function findMatchingAutomation(params: {
   instagramAccountId: string;
   triggerType: AutomationTriggerType;
   text: string;
+  mediaId?: string;
 }): Promise<Automation | null> {
   const supabase = createAdminClient();
 
@@ -34,22 +39,25 @@ export async function findMatchingAutomation(params: {
 
   const normalizedText = normalize(params.text);
 
-  for (const automation of automations) {
+  const candidates = automations.filter((automation) => {
     const keywords = automation.trigger_config?.keywords ?? [];
-    if (keywords.length === 0) continue; // gatilho sem keyword = não dispara automaticamente
+    if (keywords.length === 0) return false; // gatilho sem keyword = não dispara automaticamente
 
     const matchType = automation.trigger_config?.match_type ?? "contains";
-    const matched = keywords.some((keyword: string) => {
+    return keywords.some((keyword: string) => {
       const normalizedKeyword = normalize(keyword);
       return matchType === "exact"
         ? normalizedText === normalizedKeyword
         : normalizedText.includes(normalizedKeyword);
     });
+  });
 
-    if (matched) return automation;
-  }
+  if (!candidates.length) return null;
+  if (!params.mediaId) return candidates[0];
 
-  return null;
+  const specific = candidates.find((a) => a.trigger_config?.media_id === params.mediaId);
+  if (specific) return specific;
+  return candidates.find((a) => !a.trigger_config?.media_id) ?? null;
 }
 
 // Gatilhos que disparam incondicionalmente (sem palavra-chave) — o próprio
