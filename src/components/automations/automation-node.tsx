@@ -55,6 +55,7 @@ function summarize(type: FlowNodeType, data: FlowNodeData): string {
       return (data as SendMessageNodeData).text?.slice(0, 60) || "Sem texto definido";
     case "condition": {
       const d = data as ConditionNodeData;
+      if (d.field === "is_follower") return "É seguidor da conta?";
       return `${d.field} ${d.operator} "${d.value}"`;
     }
     case "random_split": {

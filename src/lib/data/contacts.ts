@@ -10,6 +10,10 @@ export async function getOrCreateContact(params: {
   igsid: string;
   username?: string;
   name?: string;
+  // true só no caminho de DM (handleIncomingMessage) — marca que este igsid já
+  // veio de um webhook de mensagem de verdade, não só de comentário. Necessário
+  // pra condição "É seguidor" (is_user_follow_business só é consultável nesse caso).
+  markMessaged?: boolean;
 }): Promise<{ contact: Contact; isNew: boolean }> {
   const supabase = createAdminClient();
 
@@ -23,7 +27,10 @@ export async function getOrCreateContact(params: {
   if (existing) {
     await supabase
       .from("contacts")
-      .update({ last_interaction_at: new Date().toISOString() })
+      .update({
+        last_interaction_at: new Date().toISOString(),
+        ...(params.markMessaged ? { has_messaged: true } : {}),
+      })
       .eq("id", existing.id);
     return { contact: existing, isNew: false };
   }
@@ -36,6 +43,7 @@ export async function getOrCreateContact(params: {
       igsid: params.igsid,
       username: params.username ?? null,
       name: params.name ?? null,
+      has_messaged: params.markMessaged ?? false,
     })
     .select()
     .single();

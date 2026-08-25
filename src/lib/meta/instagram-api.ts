@@ -151,6 +151,23 @@ export async function getInstagramProfile(accessToken: string): Promise<Instagra
   return res.json();
 }
 
+// Meta só libera esse campo quando o igsid consultado veio de um webhook de
+// MENSAGEM (messages.sender.id) — um igsid que só apareceu num webhook de
+// comentário não é aceito, mesmo sendo o mesmo usuário. Ver
+// contacts.has_messaged, checado antes de chamar isto (executeCondition).
+export async function getUserFollowStatus(accessToken: string, igsid: string): Promise<{ isFollower: boolean }> {
+  const params = new URLSearchParams({
+    fields: "is_user_follow_business",
+    access_token: accessToken,
+  });
+  const res = await fetch(`${GRAPH_BASE}/${igsid}?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Falha ao verificar status de seguidor: ${await res.text()}`);
+  }
+  const data = (await res.json()) as { is_user_follow_business?: boolean };
+  return { isFollower: data.is_user_follow_business === true };
+}
+
 export interface QuickReply {
   content_type: "text" | "user_phone_number" | "user_email";
   title: string; // até 20 caracteres — a Meta trunca sem avisar acima disso

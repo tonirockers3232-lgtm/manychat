@@ -101,6 +101,7 @@ async function handleIncomingMessage(
     organizationId: account.organization_id,
     instagramAccountId: account.id,
     igsid: senderIgsid,
+    markMessaged: true,
   });
   const conversation = await getOrCreateConversation({
     organizationId: account.organization_id,

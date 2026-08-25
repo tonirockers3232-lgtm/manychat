@@ -298,10 +298,18 @@ function ConditionFields({
           </Select>
         </div>
       )}
-      <div className="space-y-1.5">
-        <Label>Valor</Label>
-        <Input value={data.value} onChange={(e) => onChange({ ...data, value: e.target.value })} />
-      </div>
+      {data.field === "is_follower" ? (
+        <p className="text-xs text-muted-foreground">
+          Só funciona depois que o contato manda uma DM de verdade — a Meta não deixa checar isso em
+          cima só de um comentário. Coloque este nó depois de um "Fazer pergunta" (ou de qualquer
+          resposta em DM), não direto após um gatilho de comentário.
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          <Label>Valor</Label>
+          <Input value={data.value} onChange={(e) => onChange({ ...data, value: e.target.value })} />
+        </div>
+      )}
     </div>
   );
 }

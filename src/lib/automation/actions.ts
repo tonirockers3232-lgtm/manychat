@@ -1,5 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendDirectMessage, privateReplyToComment, replyToComment, type QuickReply } from "@/lib/meta/instagram-api";
+import {
+  sendDirectMessage,
+  privateReplyToComment,
+  replyToComment,
+  getUserFollowStatus,
+  type QuickReply,
+} from "@/lib/meta/instagram-api";
 import { generateAiReply } from "@/lib/openai/client";
 import { normalize } from "./trigger-matcher";
 import { buildContactVariables, renderTemplate } from "./variables";
@@ -134,6 +140,7 @@ async function executeCondition(
 ): Promise<NodeExecutionResult> {
   const supabase = createAdminClient();
   let matched = false;
+  let skipped: string | undefined;
 
   if (data.field === "message_contains") {
     const haystack = (ctx.incomingText ?? "").toLowerCase();
@@ -147,9 +154,28 @@ async function executeCondition(
       .eq("tags.name", data.value ?? "");
     matched = (rows?.length ?? 0) > 0;
   } else if (data.field === "is_follower") {
-    // instagram_business_basic não expõe status de "seguidor" diretamente;
-    // tratado como sempre verdadeiro até existir um campo dedicado no contato.
-    matched = true;
+    // is_user_follow_business só é consultável pela Meta quando o igsid veio de
+    // um webhook de MENSAGEM real (ver contacts.has_messaged) — um contato que só
+    // comentou ainda não pode ser checado. Fail-closed nesses casos (trata como
+    // "não segue" + loga o motivo) em vez de adivinhar, seguindo o padrão do
+    // projeto de nunca virar um silent no-op.
+    const { data: contactRow } = await supabase
+      .from("contacts")
+      .select("has_messaged")
+      .eq("id", ctx.contactId)
+      .maybeSingle();
+
+    if (!contactRow?.has_messaged) {
+      skipped =
+        "Condição 'É seguidor': a Meta só libera checar isso depois que o contato manda uma DM de verdade — este contato ainda não mandou. Tratado como 'não' por segurança.";
+    } else {
+      try {
+        const { isFollower } = await getUserFollowStatus(ctx.accessToken, ctx.igsid);
+        matched = isFollower;
+      } catch (err) {
+        skipped = `Condição 'É seguidor': falha ao consultar a API do Instagram (${err instanceof Error ? err.message : "erro desconhecido"}). Tratado como 'não' por segurança.`;
+      }
+    }
   } else if (data.field === "custom_field" && data.customFieldKey) {
     const { data: row } = await supabase
       .from("custom_field_values")
@@ -164,7 +190,7 @@ async function executeCondition(
 
   if (data.operator === "not_equals") matched = !matched;
 
-  return { action: "continue", branch: matched ? "true" : "false" };
+  return { action: "continue", branch: matched ? "true" : "false", skipped };
 }
 
 function executeRandomSplit(data: RandomSplitNodeData): NodeExecutionResult {

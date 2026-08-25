@@ -62,6 +62,7 @@ export interface Contact {
   email: string | null;
   status: ContactStatus;
   is_blocked: boolean;
+  has_messaged: boolean;
   last_interaction_at: string;
   created_at: string;
 }
