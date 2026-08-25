@@ -225,14 +225,23 @@ function AskQuestionFields({
       </div>
       {data.inputType === "choice" && (
         <div className="space-y-1.5">
-          <Label>Opções (uma por linha)</Label>
+          <Label>Opções (uma por linha, até 13)</Label>
           <Textarea
             value={(data.choices ?? []).join("\n")}
             onChange={(e) => onChange({ ...data, choices: e.target.value.split("\n").map((c) => c.trim()).filter(Boolean) })}
             rows={3}
             placeholder={"Imóvel\nVeículo\nOutro"}
           />
+          <p className="text-xs text-muted-foreground">
+            Em automações de DM viram botões reais (a Meta corta em 20 caracteres); em comentário viram uma lista de texto.
+          </p>
         </div>
+      )}
+      {(data.inputType === "phone" || data.inputType === "email") && (
+        <p className="text-xs text-muted-foreground">
+          Em automações de DM, mostra um botão que preenche direto do perfil do Instagram (se disponível) — o contato ainda
+          pode digitar em vez de tocar.
+        </p>
       )}
     </div>
   );

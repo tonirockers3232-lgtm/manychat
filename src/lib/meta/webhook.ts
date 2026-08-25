@@ -55,6 +55,11 @@ export interface InstagramMessagingEvent {
     text?: string;
     is_echo?: boolean;
     attachments?: Array<{ type: string; payload: { url?: string } }>;
+    // Presente quando a mensagem é a resposta a um botão de quick reply que
+    // enviamos — `text` já traz o título do botão, então o resto do motor
+    // trata como uma resposta de texto normal; `quick_reply.payload` fica
+    // disponível caso algum nó futuro precise diferenciar de texto livre.
+    quick_reply?: { payload: string };
   };
 }
 

@@ -122,19 +122,33 @@ export async function getInstagramProfile(accessToken: string): Promise<Instagra
   return res.json();
 }
 
+export interface QuickReply {
+  content_type: "text" | "user_phone_number" | "user_email";
+  title: string; // até 20 caracteres — a Meta trunca sem avisar acima disso
+  payload: string;
+}
+
 // Envia uma DM de texto para um contato (igsid = Instagram-scoped ID do destinatário).
+// quickReplies é opcional — até 13 botões (docs: Instagram Platform → Messaging API →
+// Quick Replies). O toque do contato num botão chega no webhook como uma mensagem de
+// texto normal (message.text = título do botão, message.quick_reply.payload = payload),
+// então o resto do motor de automação não precisa saber que veio de um botão.
 export async function sendDirectMessage(params: {
   accessToken: string;
   igBusinessId: string;
   recipientIgsid: string;
   text: string;
+  quickReplies?: QuickReply[];
 }): Promise<{ message_id: string }> {
   const res = await fetch(`${GRAPH_BASE}/${params.igBusinessId}/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       recipient: { id: params.recipientIgsid },
-      message: { text: params.text },
+      message: {
+        text: params.text,
+        ...(params.quickReplies?.length ? { quick_replies: params.quickReplies } : {}),
+      },
       access_token: params.accessToken,
     }),
   });

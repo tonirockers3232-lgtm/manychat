@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendDirectMessage, privateReplyToComment, replyToComment } from "@/lib/meta/instagram-api";
+import { sendDirectMessage, privateReplyToComment, replyToComment, type QuickReply } from "@/lib/meta/instagram-api";
 import { generateAiReply } from "@/lib/openai/client";
 import { normalize } from "./trigger-matcher";
 import { buildContactVariables, renderTemplate } from "./variables";
@@ -74,8 +74,10 @@ async function recordOutboundMessage(ctx: RunContext, text: string, senderType: 
 // fora da janela de 24h de DM para quem só comentou, nunca abriu conversa.
 // Usada tanto pelo nó "Enviar mensagem" quanto pelo "Resposta com IA", que
 // antes divergiam nisso (o de IA sempre mandava DM padrão, mesmo vindo de comentário).
-async function sendOutboundText(ctx: RunContext, text: string): Promise<void> {
+async function sendOutboundText(ctx: RunContext, text: string, quickReplies?: QuickReply[]): Promise<void> {
   if (ctx.incomingCommentId) {
+    // A resposta privada a comentário não documenta suporte a quick_replies —
+    // ignorado nesse caminho em vez de arriscar um payload que a Meta rejeite.
     await privateReplyToComment({
       accessToken: ctx.accessToken,
       igBusinessId: ctx.igBusinessId,
@@ -88,6 +90,7 @@ async function sendOutboundText(ctx: RunContext, text: string): Promise<void> {
       igBusinessId: ctx.igBusinessId,
       recipientIgsid: ctx.igsid,
       text,
+      quickReplies,
     });
   }
 }
@@ -180,6 +183,29 @@ async function executeTag(
   return { action: "continue" };
 }
 
+// Botões de quick reply (docs: Instagram Platform → Messaging API → Quick
+// Replies) só existem no caminho de DM — a resposta privada a comentário não
+// os documenta. Quando o run veio de um comentário, cai pro texto simples
+// "Responda com: ..." de sempre.
+function buildQuickReplies(data: AskQuestionNodeData, isDm: boolean): QuickReply[] | undefined {
+  if (!isDm) return undefined;
+
+  if (data.inputType === "choice" && data.choices?.length) {
+    return data.choices.slice(0, 13).map((choice) => ({
+      content_type: "text",
+      title: choice.slice(0, 20),
+      payload: choice.slice(0, 1000),
+    }));
+  }
+  if (data.inputType === "phone") {
+    return [{ content_type: "user_phone_number", title: "Usar meu telefone", payload: "phone" }];
+  }
+  if (data.inputType === "email") {
+    return [{ content_type: "user_email", title: "Usar meu e-mail", payload: "email" }];
+  }
+  return undefined;
+}
+
 async function executeAskQuestion(
   data: AskQuestionNodeData,
   ctx: RunContext
@@ -187,13 +213,17 @@ async function executeAskQuestion(
   let question = data.question?.trim();
   if (!question) return { action: "continue", skipped: "Nó 'Pergunta' sem texto configurado" };
 
-  if (data.inputType === "choice" && data.choices?.length) {
+  const quickReplies = buildQuickReplies(data, !ctx.incomingCommentId);
+
+  // Sem quick replies (comentário, ou tipo sem botão equivalente), mantém a
+  // lista de opções no próprio texto — é a única forma de mostrar as opções.
+  if (data.inputType === "choice" && data.choices?.length && !quickReplies) {
     question += `\n\nResponda com: ${data.choices.join(", ")}`;
   }
 
   try {
     const text = renderTemplate(question, await buildContactVariables(ctx.contactId));
-    await sendOutboundText(ctx, text);
+    await sendOutboundText(ctx, text, quickReplies);
     await recordOutboundMessage(ctx, text, "automation");
     return { action: "ask" };
   } catch (error) {
