@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrganization } from "@/lib/data/organizations";
 import { flowDefinitionSchema } from "@/lib/validations/automation";
 import { logAudit } from "@/lib/audit";
+import { deriveTriggerConfig } from "@/lib/automation/flow-utils";
+import { getAutomationTemplate } from "@/lib/automation/templates";
 import type { AutomationStatus, AutomationTriggerType } from "@/types/database";
 import type { FlowDefinition } from "@/types/automation";
 
@@ -52,6 +54,47 @@ export async function createAutomation(params: { name: string; triggerType: Auto
   return data;
 }
 
+export async function createAutomationFromTemplate(params: { templateId: string; name: string; instagramAccountId: string | null }) {
+  const template = getAutomationTemplate(params.templateId);
+  if (!template) throw new Error("Modelo não encontrado");
+
+  const organization = await getCurrentOrganization();
+  if (!organization) throw new Error("Organização não encontrada");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase
+    .from("automations")
+    .insert({
+      organization_id: organization.id,
+      instagram_account_id: params.instagramAccountId,
+      name: params.name,
+      trigger_type: template.triggerType,
+      trigger_config: deriveTriggerConfig(template.flow),
+      flow_definition: template.flow,
+      created_by: user?.id,
+    })
+    .select()
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? "Falha ao criar automação a partir do modelo");
+
+  await logAudit({
+    organizationId: organization.id,
+    action: "created",
+    entityType: "automation",
+    entityId: data.id,
+    entityName: data.name,
+    detail: { fromTemplate: template.id },
+  });
+
+  revalidatePath("/dashboard/automations");
+  return data;
+}
+
 export async function updateAutomationFlow(id: string, flowDefinition: FlowDefinition) {
   const parsed = flowDefinitionSchema.safeParse(flowDefinition);
   if (!parsed.success) {
@@ -62,11 +105,7 @@ export async function updateAutomationFlow(id: string, flowDefinition: FlowDefin
   // não o nó de gatilho dentro de `flow_definition` — sem essa sincronização, uma
   // automação salva com keywords no editor visual nunca dispara (trigger_config
   // fica `{}` desde a criação, keywords.length === 0, gatilho ignorado em silêncio).
-  const triggerNode = parsed.data.nodes.find((n) => n.type === "trigger");
-  const triggerConfig =
-    triggerNode?.type === "trigger"
-      ? { keywords: triggerNode.data.keywords ?? [], match_type: triggerNode.data.matchType ?? "contains" }
-      : {};
+  const triggerConfig = deriveTriggerConfig(parsed.data);
 
   const supabase = await createClient();
   const { data, error } = await supabase

@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createAutomation } from "@/lib/actions/automations";
+import { createAutomation, createAutomationFromTemplate } from "@/lib/actions/automations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AUTOMATION_TEMPLATES } from "@/lib/automation/templates";
 import type { AutomationTriggerType } from "@/types/database";
 
 const TRIGGER_OPTIONS: Array<{ value: AutomationTriggerType; label: string; description: string }> = [
@@ -20,8 +21,10 @@ const TRIGGER_OPTIONS: Array<{ value: AutomationTriggerType; label: string; desc
 ];
 
 export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; username: string | null }> }) {
+  const [mode, setMode] = useState<"blank" | "template">("blank");
   const [name, setName] = useState("");
   const [triggerType, setTriggerType] = useState<AutomationTriggerType>("dm_keyword");
+  const [templateId, setTemplateId] = useState(AUTOMATION_TEMPLATES[0]?.id ?? "");
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id ?? "");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -33,7 +36,10 @@ export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; 
     }
     startTransition(async () => {
       try {
-        const automation = await createAutomation({ name, triggerType, instagramAccountId: accountId || null });
+        const automation =
+          mode === "template"
+            ? await createAutomationFromTemplate({ templateId, name, instagramAccountId: accountId || null })
+            : await createAutomation({ name, triggerType, instagramAccountId: accountId || null });
         router.push(`/dashboard/automations/${automation.id}`);
       } catch {
         toast.error("Não foi possível criar a automação");
@@ -44,6 +50,23 @@ export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; 
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
+        <div className="grid grid-cols-2 gap-2 rounded-md bg-muted p-1 text-sm">
+          <button
+            type="button"
+            onClick={() => setMode("blank")}
+            className={`rounded px-3 py-1.5 font-medium transition-colors ${mode === "blank" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+          >
+            Começar do zero
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("template")}
+            className={`rounded px-3 py-1.5 font-medium transition-colors ${mode === "template" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+          >
+            Usar um modelo
+          </button>
+        </div>
+
         <div className="space-y-1.5">
           <Label htmlFor="name">Nome da automação</Label>
           <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Boas-vindas" />
@@ -65,30 +88,61 @@ export function NewAutomationForm({ accounts }: { accounts: Array<{ id: string; 
           </Select>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Gatilho</Label>
-          <div className="space-y-2">
-            {TRIGGER_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${
-                  triggerType === option.value ? "border-primary bg-primary/5" : ""
-                }`}
-              >
-                <span className="flex items-center gap-2 font-medium">
-                  <input
-                    type="radio"
-                    name="triggerType"
-                    checked={triggerType === option.value}
-                    onChange={() => setTriggerType(option.value)}
-                  />
-                  {option.label}
-                </span>
-                <span className="mt-1 text-xs text-muted-foreground">{option.description}</span>
-              </label>
-            ))}
+        {mode === "blank" ? (
+          <div className="space-y-1.5">
+            <Label>Gatilho</Label>
+            <div className="space-y-2">
+              {TRIGGER_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${
+                    triggerType === option.value ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <span className="flex items-center gap-2 font-medium">
+                    <input
+                      type="radio"
+                      name="triggerType"
+                      checked={triggerType === option.value}
+                      onChange={() => setTriggerType(option.value)}
+                    />
+                    {option.label}
+                  </span>
+                  <span className="mt-1 text-xs text-muted-foreground">{option.description}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-1.5">
+            <Label>Modelo</Label>
+            <div className="space-y-2">
+              {AUTOMATION_TEMPLATES.map((template) => (
+                <label
+                  key={template.id}
+                  className={`flex cursor-pointer flex-col rounded-md border p-3 text-sm ${
+                    templateId === template.id ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <span className="flex items-center gap-2 font-medium">
+                    <input
+                      type="radio"
+                      name="templateId"
+                      checked={templateId === template.id}
+                      onChange={() => setTemplateId(template.id)}
+                    />
+                    {template.name}
+                  </span>
+                  <span className="mt-1 text-xs text-muted-foreground">{template.description}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O modelo cria a automação como rascunho, já com o fluxo montado — revise as palavras-chave e os textos
+              antes de ativar.
+            </p>
+          </div>
+        )}
 
         <Button className="w-full" onClick={handleSubmit} disabled={isPending}>
           {isPending ? "Criando..." : "Criar e abrir editor"}
