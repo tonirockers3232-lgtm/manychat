@@ -245,5 +245,20 @@ export interface Subscription {
   updated_at: string;
 }
 
+export type AuditAction = "created" | "updated" | "status_changed" | "deleted";
+export type AuditEntityType = "automation" | "custom_field" | "segment";
+
+export interface AuditLog {
+  id: string;
+  organization_id: string;
+  user_id: string | null;
+  action: AuditAction;
+  entity_type: AuditEntityType;
+  entity_id: string | null;
+  entity_name: string | null;
+  detail: Record<string, unknown>;
+  created_at: string;
+}
+
 // Re-exportado aqui para manter os tipos de fluxo junto ao restante do domínio.
 export type { FlowDefinition };

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrganization } from "@/lib/data/organizations";
 import { flowDefinitionSchema } from "@/lib/validations/automation";
+import { logAudit } from "@/lib/audit";
 import type { AutomationStatus, AutomationTriggerType } from "@/types/database";
 import type { FlowDefinition } from "@/types/automation";
 
@@ -39,6 +40,14 @@ export async function createAutomation(params: { name: string; triggerType: Auto
 
   if (error || !data) throw new Error(error?.message ?? "Falha ao criar automação");
 
+  await logAudit({
+    organizationId: organization.id,
+    action: "created",
+    entityType: "automation",
+    entityId: data.id,
+    entityName: data.name,
+  });
+
   revalidatePath("/dashboard/automations");
   return data;
 }
@@ -60,25 +69,65 @@ export async function updateAutomationFlow(id: string, flowDefinition: FlowDefin
       : {};
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("automations")
     .update({ flow_definition: parsed.data, trigger_config: triggerConfig })
-    .eq("id", id);
+    .eq("id", id)
+    .select("organization_id, name")
+    .single();
   if (error) throw new Error(error.message);
+
+  await logAudit({
+    organizationId: data.organization_id,
+    action: "updated",
+    entityType: "automation",
+    entityId: id,
+    entityName: data.name,
+    detail: { nodes: parsed.data.nodes.length, edges: parsed.data.edges.length },
+  });
+
   revalidatePath(`/dashboard/automations/${id}`);
 }
 
 export async function updateAutomationStatus(id: string, status: AutomationStatus) {
   const supabase = await createClient();
-  const { error } = await supabase.from("automations").update({ status }).eq("id", id);
+  const { data, error } = await supabase
+    .from("automations")
+    .update({ status })
+    .eq("id", id)
+    .select("organization_id, name")
+    .single();
   if (error) throw new Error(error.message);
+
+  await logAudit({
+    organizationId: data.organization_id,
+    action: "status_changed",
+    entityType: "automation",
+    entityId: id,
+    entityName: data.name,
+    detail: { status },
+  });
+
   revalidatePath("/dashboard/automations");
   revalidatePath(`/dashboard/automations/${id}`);
 }
 
 export async function deleteAutomation(id: string) {
   const supabase = await createClient();
+  const { data: existing } = await supabase.from("automations").select("organization_id, name").eq("id", id).single();
+
   const { error } = await supabase.from("automations").delete().eq("id", id);
   if (error) throw new Error(error.message);
+
+  if (existing) {
+    await logAudit({
+      organizationId: existing.organization_id,
+      action: "deleted",
+      entityType: "automation",
+      entityId: null,
+      entityName: existing.name,
+    });
+  }
+
   revalidatePath("/dashboard/automations");
 }

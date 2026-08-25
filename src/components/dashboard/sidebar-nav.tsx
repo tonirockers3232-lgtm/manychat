@@ -13,6 +13,7 @@ import {
   KeyRound,
   BarChart3,
   ScrollText,
+  History,
   Settings,
   CreditCard,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/contacts", label: "Contatos", icon: Users },
   { href: "/dashboard/segments", label: "Segmentos", icon: Tags },
   { href: "/dashboard/logs", label: "Logs", icon: ScrollText },
+  { href: "/dashboard/audit-logs", label: "Auditoria", icon: History },
   { href: "/dashboard/settings", label: "Configurações", icon: Settings },
   { href: "/dashboard/subscription", label: "Assinatura", icon: CreditCard },
 ];
