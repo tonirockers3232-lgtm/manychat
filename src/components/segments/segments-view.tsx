@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Users } from "lucide-react";
 import { createSegment, deleteSegment } from "@/lib/actions/segments";
-import { STATUS_LABEL } from "@/components/contacts/contact-status-select";
+import { STATUS_LABEL } from "@/lib/contact-status";
 import type { ContactWithRelations } from "@/lib/data/segments";
 import type { CustomField, Segment, SegmentFilterRules } from "@/types/database";
 

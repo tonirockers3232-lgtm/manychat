@@ -1,4 +1,4 @@
-import { STATUS_LABEL } from "@/components/contacts/contact-status-select";
+import { STATUS_LABEL } from "@/lib/contact-status";
 import type { ContactStatus } from "@/types/database";
 
 // Passos ordinais do azul sequencial (references/palette.md) — no claro, o
