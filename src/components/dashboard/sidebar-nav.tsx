@@ -16,6 +16,7 @@ import {
   History,
   Settings,
   CreditCard,
+  Megaphone,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/inbox", label: "Caixa de entrada", icon: Inbox },
   { href: "/dashboard/automations", label: "Automações", icon: Workflow },
   { href: "/dashboard/keywords", label: "Palavras-chave", icon: KeyRound },
+  { href: "/dashboard/broadcasts", label: "Mensagem em massa", icon: Megaphone },
   { href: "/dashboard/contacts", label: "Contatos", icon: Users },
   { href: "/dashboard/segments", label: "Segmentos", icon: Tags },
   { href: "/dashboard/logs", label: "Logs", icon: ScrollText },

@@ -25,6 +25,7 @@ const ENTITY_LABEL: Record<AuditEntityType, string> = {
   automation: "automação",
   custom_field: "campo personalizado",
   segment: "segmento",
+  broadcast: "mensagem em massa",
 };
 
 export default async function AuditLogsPage() {

@@ -29,7 +29,7 @@ export async function getOrCreateContact(params: {
       .from("contacts")
       .update({
         last_interaction_at: new Date().toISOString(),
-        ...(params.markMessaged ? { has_messaged: true } : {}),
+        ...(params.markMessaged ? { has_messaged: true, last_inbound_message_at: new Date().toISOString() } : {}),
       })
       .eq("id", existing.id);
     return { contact: existing, isNew: false };
@@ -44,6 +44,7 @@ export async function getOrCreateContact(params: {
       username: params.username ?? null,
       name: params.name ?? null,
       has_messaged: params.markMessaged ?? false,
+      last_inbound_message_at: params.markMessaged ? new Date().toISOString() : null,
     })
     .select()
     .single();

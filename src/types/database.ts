@@ -63,6 +63,7 @@ export interface Contact {
   status: ContactStatus;
   is_blocked: boolean;
   has_messaged: boolean;
+  last_inbound_message_at: string | null;
   last_interaction_at: string;
   created_at: string;
 }
@@ -110,6 +111,38 @@ export interface SegmentFilterRules {
     value: string;
     customFieldKey?: string; // obrigatório quando field === "custom_field"
   }>;
+}
+
+export type BroadcastAudienceType = "all" | "tag" | "segment";
+export type BroadcastStatus = "draft" | "sending" | "completed";
+
+export interface Broadcast {
+  id: string;
+  organization_id: string;
+  instagram_account_id: string;
+  name: string;
+  message_text: string;
+  audience_type: BroadcastAudienceType;
+  audience_ref: string | null;
+  status: BroadcastStatus;
+  created_at: string;
+  sent_at: string | null;
+}
+
+// "processing" é transitório (o cron reivindica a linha antes de mandar a DM,
+// evita reenvio duplicado se duas execuções do cron se sobrepuserem) —
+// tratado como "pending" em qualquer contagem exibida na UI.
+export type BroadcastRecipientStatus = "pending" | "processing" | "sent" | "skipped_window" | "failed";
+
+export interface BroadcastRecipient {
+  id: string;
+  organization_id: string;
+  broadcast_id: string;
+  contact_id: string;
+  status: BroadcastRecipientStatus;
+  detail: string | null;
+  sent_at: string | null;
+  created_at: string;
 }
 
 export type ConversationStatus = "open" | "closed" | "snoozed";
@@ -247,7 +280,7 @@ export interface Subscription {
 }
 
 export type AuditAction = "created" | "updated" | "status_changed" | "deleted";
-export type AuditEntityType = "automation" | "custom_field" | "segment";
+export type AuditEntityType = "automation" | "custom_field" | "segment" | "broadcast";
 
 export interface AuditLog {
   id: string;

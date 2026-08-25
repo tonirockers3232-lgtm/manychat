@@ -197,3 +197,8 @@ A tabela `subscriptions` e a página `/dashboard/subscription` já existem. Para
 - `src/proxy.ts` (antigo `middleware.ts` — renomeado seguindo a migração do Next.js 16) faz apenas
   o gate de autenticação por cookie; ele não valida se o usuário pertence à organização de cada
   rota — isso é garantido pelas policies de RLS em cada query, não pelo proxy.
+- Mensagem em massa (`/dashboard/broadcasts`) só entrega pra contatos dentro da janela de 24h da
+  Meta (não existe tag de "marketing" liberada pro Instagram, diferente do Messenger) — quem está
+  fora fica registrado como "fora da janela", nunca é tentado. O envio real é processado por
+  `/api/cron/process-broadcasts`, que precisa do mesmo cron externo (cron-job.org, `CRON_SECRET`)
+  já usado por `/api/cron/process-automations` — a Vercel Hobby só libera 1 cron próprio.
