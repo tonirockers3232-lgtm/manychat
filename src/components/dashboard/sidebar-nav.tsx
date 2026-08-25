@@ -11,6 +11,7 @@ import {
   Users,
   Tags,
   KeyRound,
+  BarChart3,
   ScrollText,
   Settings,
   CreditCard,
@@ -18,6 +19,7 @@ import {
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/instagram", label: "Instagram", icon: Instagram },
   { href: "/dashboard/inbox", label: "Caixa de entrada", icon: Inbox },
   { href: "/dashboard/automations", label: "Automações", icon: Workflow },
