@@ -62,7 +62,8 @@ export async function getAnalyticsSummary(organizationId: string): Promise<Analy
       supabase
         .from("automation_runs")
         .select("automation_id, status, automations(name, trigger_type, trigger_config)")
-        .eq("organization_id", organizationId),
+        .eq("organization_id", organizationId)
+        .eq("is_test", false), // runs do botão "Testar automação" não entram no ranking real
     ]);
 
   const totalContacts = contacts?.length ?? 0;

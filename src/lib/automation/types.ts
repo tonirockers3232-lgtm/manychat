@@ -12,6 +12,7 @@ export interface RunContext {
   incomingText?: string; // texto da DM ou comentário que disparou o fluxo
   incomingCommentId?: string; // presente quando o gatilho foi um comentário
   chainDepth?: number; // nº de saltos "iniciar automação" já percorridos nesta cadeia (trava contra loop entre automações)
+  isTest?: boolean; // run disparado pelo botão "Testar automação", não por um gatilho real
 }
 
 export type NodeExecutionResult =

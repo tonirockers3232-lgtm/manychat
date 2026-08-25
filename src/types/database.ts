@@ -218,6 +218,7 @@ export interface AutomationRun {
   status: AutomationRunStatus;
   current_node_id: string | null;
   context: Record<string, unknown>;
+  is_test: boolean;
   started_at: string;
   finished_at: string | null;
 }

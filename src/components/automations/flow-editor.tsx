@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { nodeTypes, NODE_META } from "./automation-node";
 import { NodePanel } from "./node-panel";
+import { TestAutomationDialog } from "./test-automation-dialog";
 import { updateAutomationFlow, updateAutomationStatus, deleteAutomation } from "@/lib/actions/automations";
 import type { Automation, AutomationStatus, CustomField } from "@/types/database";
 import type { FlowNode, FlowNodeType, FlowNodeData } from "@/types/automation";
@@ -78,10 +79,12 @@ export function FlowEditor({
   automation,
   customFields,
   otherAutomations,
+  testContacts,
 }: {
   automation: Automation;
   customFields: CustomField[];
   otherAutomations: Array<{ id: string; name: string }>;
+  testContacts: Array<{ id: string; username: string | null; name: string | null; igsid: string }>;
 }) {
   const router = useRouter();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(automation.flow_definition.nodes as unknown as Node[]);
@@ -179,6 +182,11 @@ export function FlowEditor({
                 <SelectItem value="paused">Pausada</SelectItem>
               </SelectContent>
             </Select>
+            <TestAutomationDialog
+              automationId={automation.id}
+              instagramAccountId={automation.instagram_account_id}
+              contacts={testContacts}
+            />
             <Button size="sm" onClick={handleSave} disabled={isSaving}>
               <Save className="h-4 w-4" />
               Salvar

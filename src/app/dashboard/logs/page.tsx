@@ -13,7 +13,7 @@ export default async function LogsPage() {
 
   const { data: logs } = await supabase
     .from("automation_logs")
-    .select("*, automation_runs(automations(name))")
+    .select("*, automation_runs(is_test, automations(name))")
     .eq("organization_id", organization!.id)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -34,12 +34,18 @@ export default async function LogsPage() {
             </div>
           )}
           {(logs ?? []).map((log) => {
-            const automationName = (log.automation_runs as unknown as { automations: { name: string } } | null)?.automations?.name;
+            const run = log.automation_runs as unknown as { is_test: boolean; automations: { name: string } | null } | null;
+            const automationName = run?.automations?.name;
             return (
               <div key={log.id} className="flex items-center justify-between gap-3 border-b px-4 py-3 text-sm last:border-0">
                 <div className="min-w-0">
                   <p className="font-medium">
                     {automationName ?? "Automação removida"} <span className="text-muted-foreground">· {log.node_type}</span>
+                    {run?.is_test && (
+                      <span className="ml-2 inline-block rounded-md border px-2 py-0.5 align-middle text-[10px] font-medium">
+                        Teste
+                      </span>
+                    )}
                   </p>
                   {(log.status === "error" || log.status === "skipped") && log.detail?.reason && (
                     <p

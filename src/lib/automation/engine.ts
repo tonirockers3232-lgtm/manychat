@@ -50,6 +50,7 @@ export async function startAutomationRun(automation: Automation, ctx: RunContext
       status: "running",
       current_node_id: triggerNode.id,
       context: { incomingText: ctx.incomingText ?? null },
+      is_test: ctx.isTest ?? false,
     })
     .select()
     .single();

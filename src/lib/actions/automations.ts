@@ -2,13 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { decryptToken } from "@/lib/crypto";
 import { getCurrentOrganization } from "@/lib/data/organizations";
+import { getOrCreateConversation } from "@/lib/data/contacts";
 import { flowDefinitionSchema } from "@/lib/validations/automation";
 import { logAudit } from "@/lib/audit";
 import { deriveTriggerConfig } from "@/lib/automation/flow-utils";
 import { getAutomationTemplate } from "@/lib/automation/templates";
+import { startAutomationRun } from "@/lib/automation/engine";
 import type { AutomationStatus, AutomationTriggerType } from "@/types/database";
 import type { FlowDefinition } from "@/types/automation";
+import type { RunContext } from "@/lib/automation/types";
 
 function defaultFlowFor(triggerType: AutomationTriggerType): FlowDefinition {
   return {
@@ -169,4 +173,67 @@ export async function deleteAutomation(id: string) {
   }
 
   revalidatePath("/dashboard/automations");
+}
+
+// Roda o fluxo salvo de uma automação pra um contato real escolhido à mão,
+// sem precisar que ele mande uma DM/comentário de verdade pra disparar o
+// gatilho. Reusa `startAutomationRun` — mesmo motor, mesmos nós, mensagens
+// realmente enviadas pela Graph API — só pula a etapa de casar o gatilho.
+// `is_test: true` no run resultante é o que deixa Analytics excluir isso do
+// ranking de automações sem esconder o histórico da página de Logs.
+export async function testAutomationRun(params: {
+  automationId: string;
+  contactId: string;
+  simulatedText?: string;
+}) {
+  const supabase = await createClient();
+
+  const { data: automation, error: automationError } = await supabase
+    .from("automations")
+    .select("*")
+    .eq("id", params.automationId)
+    .single();
+  if (automationError || !automation) throw new Error("Automação não encontrada");
+  if (!automation.instagram_account_id) throw new Error("Esta automação não tem uma conta do Instagram vinculada");
+
+  const { data: contact, error: contactError } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", params.contactId)
+    .single();
+  if (contactError || !contact) throw new Error("Contato não encontrado");
+  if (contact.instagram_account_id !== automation.instagram_account_id) {
+    throw new Error("Esse contato não pertence à mesma conta do Instagram desta automação");
+  }
+
+  const { data: account, error: accountError } = await supabase
+    .from("instagram_accounts")
+    .select("instagram_business_id, access_token, status")
+    .eq("id", automation.instagram_account_id)
+    .single();
+  if (accountError || !account) throw new Error("Conta do Instagram não encontrada");
+  if (account.status !== "connected") throw new Error("Conta do Instagram desconectada — reconecte antes de testar");
+
+  const conversation = await getOrCreateConversation({
+    organizationId: automation.organization_id,
+    instagramAccountId: automation.instagram_account_id,
+    contactId: contact.id,
+  });
+
+  const ctx: RunContext = {
+    organizationId: automation.organization_id,
+    instagramAccountId: automation.instagram_account_id,
+    igBusinessId: account.instagram_business_id,
+    accessToken: decryptToken(account.access_token),
+    contactId: contact.id,
+    igsid: contact.igsid,
+    conversationId: conversation.id,
+    incomingText: params.simulatedText?.trim() || undefined,
+    isTest: true,
+  };
+
+  await startAutomationRun(automation, ctx);
+
+  revalidatePath("/dashboard/logs");
+  revalidatePath("/dashboard/inbox");
 }
