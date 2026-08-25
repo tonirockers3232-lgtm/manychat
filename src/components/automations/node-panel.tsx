@@ -118,15 +118,53 @@ function TriggerFields({ data, onChange }: { data: TriggerNodeData; onChange: (d
 }
 
 function SendMessageFields({ data, onChange }: { data: SendMessageNodeData; onChange: (d: SendMessageNodeData) => void }) {
+  const buttons = data.quickReplies ?? [];
+
+  function addButton() {
+    if (buttons.length >= 13) return;
+    onChange({ ...data, quickReplies: [...buttons, { id: crypto.randomUUID(), label: "" }] });
+  }
+  function updateButton(id: string, label: string) {
+    onChange({ ...data, quickReplies: buttons.map((b) => (b.id === id ? { ...b, label } : b)) });
+  }
+  function removeButton(id: string) {
+    onChange({ ...data, quickReplies: buttons.filter((b) => b.id !== id) });
+  }
+
   return (
-    <div className="space-y-1.5">
-      <Label>Texto da mensagem</Label>
-      <Textarea
-        value={data.text ?? ""}
-        onChange={(e) => onChange({ ...data, messageType: "text", text: e.target.value })}
-        rows={5}
-        placeholder="Olá! Obrigado por chamar 🙌"
-      />
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <Label>Texto da mensagem</Label>
+        <Textarea
+          value={data.text ?? ""}
+          onChange={(e) => onChange({ ...data, messageType: "text", text: e.target.value })}
+          rows={5}
+          placeholder="Olá! Obrigado por chamar 🙌"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label>Botões (opcional, até 13)</Label>
+          <Button type="button" variant="ghost" size="sm" onClick={addButton} disabled={buttons.length >= 13}>
+            + Botão
+          </Button>
+        </div>
+        {buttons.map((b) => (
+          <div key={b.id} className="flex items-center gap-1.5">
+            <Input value={b.label} maxLength={20} onChange={(e) => updateButton(b.id, e.target.value)} placeholder="Ex: Quero saber mais" />
+            <Button type="button" variant="ghost" size="icon" onClick={() => removeButton(b.id)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        {buttons.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Conecte cada botão a um nó diferente (arraste a partir do ponto abaixo dele no fluxo). Só funcionam em
+            automações de DM — em automações de comentário a mensagem sai sem botões e o fluxo segue pela primeira
+            ligação cadastrada a partir deste nó.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

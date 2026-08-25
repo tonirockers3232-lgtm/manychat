@@ -1,7 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Automation, AutomationRun } from "@/types/database";
-import type { AskQuestionNodeData, FlowDefinition } from "@/types/automation";
+import type { AskQuestionNodeData, SendMessageNodeData, FlowDefinition } from "@/types/automation";
 import { executeNode, saveQuestionAnswer } from "./actions";
+import { normalize } from "./trigger-matcher";
 import type { RunContext } from "./types";
 
 const MAX_STEPS_PER_INVOCATION = 50; // trava contra loop infinito no flow
@@ -88,6 +89,36 @@ export async function resumeFromReply(
 
   const nextNodeId = findNextNodeId(flow, run.current_node_id!);
   await advanceRun({ ...run, current_node_id: nextNodeId, context: { incomingText: replyText } }, flow, ctx);
+}
+
+// Retoma um run parado num nó "Enviar mensagem" com botões — a mensagem
+// recebida é o toque num botão (ou, se o app do contato não confirma o
+// payload, o texto digitado igual ao rótulo do botão). Retorna `false` sem
+// mexer no run quando nada bate, para o webhook tratar como mensagem comum
+// (ex: o contato ignorou os botões e mandou outra coisa).
+export async function resumeFromButtonTap(
+  run: AutomationRun,
+  automation: Automation,
+  ctx: RunContext,
+  payload: string | null,
+  typedText: string
+): Promise<boolean> {
+  const flow = automation.flow_definition;
+  const node = flow.nodes.find((n) => n.id === run.current_node_id);
+  if (node?.type !== "send_message") return false;
+
+  const buttons = (node.data as SendMessageNodeData).quickReplies ?? [];
+  if (!buttons.length) return false;
+
+  const matchedId =
+    (payload && buttons.find((b) => b.id === payload)?.id) ??
+    buttons.find((b) => normalize(b.label) === normalize(typedText))?.id ??
+    null;
+  if (!matchedId) return false;
+
+  const nextNodeId = findNextNodeId(flow, run.current_node_id!, matchedId);
+  await advanceRun({ ...run, current_node_id: nextNodeId, context: { incomingText: typedText } }, flow, ctx);
+  return true;
 }
 
 async function advanceRun(run: AutomationRun, flow: FlowDefinition, ctx: RunContext): Promise<void> {

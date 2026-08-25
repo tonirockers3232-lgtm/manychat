@@ -18,7 +18,7 @@ const sendMessageDataSchema = z.object({
   messageType: z.enum(["text", "image", "quick_reply"]),
   text: z.string().optional(),
   mediaUrl: z.string().optional(),
-  quickReplies: z.array(z.object({ label: z.string(), nextNodeId: z.string().optional() })).optional(),
+  quickReplies: z.array(z.object({ id: z.string().min(1), label: z.string() })).optional(),
 });
 
 const conditionDataSchema = z.object({

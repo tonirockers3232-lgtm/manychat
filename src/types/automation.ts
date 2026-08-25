@@ -26,11 +26,14 @@ export interface TriggerNodeData {
   matchType?: "exact" | "contains";
 }
 
+// Botões reais (Instagram quick replies), só em DM. Cada botão vira uma
+// aresta própria no editor (sourceHandle = button.id) — tocar no botão retoma
+// o run pelo ramo daquele id, igual ao esquema de "true"/"false" da Condição.
 export interface SendMessageNodeData {
   messageType: "text" | "image" | "quick_reply";
   text?: string;
   mediaUrl?: string;
-  quickReplies?: Array<{ label: string; nextNodeId?: string }>;
+  quickReplies?: Array<{ id: string; label: string }>;
 }
 
 export interface ConditionNodeData {

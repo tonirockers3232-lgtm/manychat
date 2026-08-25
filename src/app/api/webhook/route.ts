@@ -13,7 +13,7 @@ import {
   findStoryReplyAutomation,
   findStoryMentionAutomation,
 } from "@/lib/automation/trigger-matcher";
-import { startAutomationRun, resumeFromReply } from "@/lib/automation/engine";
+import { startAutomationRun, resumeFromReply, resumeFromButtonTap } from "@/lib/automation/engine";
 import type { RunContext } from "@/lib/automation/types";
 import type { InstagramMessagingEvent } from "@/lib/meta/webhook";
 import type { Automation, AutomationRun, InstagramAccount } from "@/types/database";
@@ -172,6 +172,10 @@ async function handleIncomingMessage(
       if (currentNode?.type === "ask_question") {
         await resumeFromReply(run, automation, ctx, text);
         return;
+      }
+      if (currentNode?.type === "send_message") {
+        const handled = await resumeFromButtonTap(run, automation, ctx, message.quick_reply?.payload ?? null, text);
+        if (handled) return;
       }
     }
   }

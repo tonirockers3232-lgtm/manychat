@@ -79,6 +79,10 @@ export function AutomationNode({ data, type, selected }: NodeProps) {
   const meta = NODE_META[nodeType];
   const Icon = meta.icon;
   const summaryText = summarize(nodeType, data as unknown as FlowNodeData);
+  const buttons =
+    nodeType === "send_message"
+      ? ((data as unknown as SendMessageNodeData).quickReplies ?? []).filter((b) => b.label?.trim())
+      : [];
 
   return (
     <div
@@ -110,6 +114,15 @@ export function AutomationNode({ data, type, selected }: NodeProps) {
           <span>B</span>
         </div>
       ) : null}
+      {buttons.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {buttons.map((b) => (
+            <span key={b.id} className="rounded border border-blue-300 bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-700">
+              {b.label}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {nodeType === "condition" ? (
         <>
@@ -120,6 +133,19 @@ export function AutomationNode({ data, type, selected }: NodeProps) {
         <>
           <Handle type="source" position={Position.Bottom} id="a" className="!left-6 !bg-indigo-500" />
           <Handle type="source" position={Position.Bottom} id="b" className="!left-auto !right-6 !bg-indigo-300" />
+        </>
+      ) : buttons.length > 0 ? (
+        <>
+          {buttons.map((b, i) => (
+            <Handle
+              key={b.id}
+              type="source"
+              position={Position.Bottom}
+              id={b.id}
+              style={{ left: `${((i + 1) / (buttons.length + 1)) * 100}%` }}
+              className="!bg-blue-500"
+            />
+          ))}
         </>
       ) : (
         <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground" />

@@ -105,11 +105,20 @@ async function executeSendMessage(
   const raw = data.text?.trim();
   if (!raw) return { action: "continue", skipped: "Nó 'Enviar mensagem' sem texto configurado" };
 
+  const buttons = (data.quickReplies ?? []).filter((b) => b.label?.trim());
+  // Botões (branching por toque) só existem em DM, mesma restrição documentada
+  // de quick_replies usada em ask_question — em comentário a mensagem sai sem
+  // eles e o fluxo segue pela primeira aresta cadastrada a partir deste nó.
+  const quickReplies: QuickReply[] | undefined =
+    buttons.length && !ctx.incomingCommentId
+      ? buttons.slice(0, 13).map((b) => ({ content_type: "text", title: b.label.slice(0, 20), payload: b.id }))
+      : undefined;
+
   try {
     const text = renderTemplate(raw, await buildContactVariables(ctx.contactId));
-    await sendOutboundText(ctx, text);
+    await sendOutboundText(ctx, text, quickReplies);
     await recordOutboundMessage(ctx, text, "automation");
-    return { action: "continue" };
+    return quickReplies ? { action: "ask" } : { action: "continue" };
   } catch (error) {
     return { action: "stop", reason: (error as Error).message };
   }

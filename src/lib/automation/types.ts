@@ -14,9 +14,9 @@ export interface RunContext {
 }
 
 export type NodeExecutionResult =
-  | { action: "continue"; branch?: "true" | "false" | "a" | "b"; skipped?: string }
+  | { action: "continue"; branch?: string; skipped?: string }
   | { action: "wait"; nextNodeId: string; runAt: string }
-  | { action: "ask" } // pergunta enviada; run pausa até a próxima mensagem do contato
+  | { action: "ask" } // pergunta enviada, ou mensagem com botões; run pausa até a próxima mensagem/toque do contato
   | { action: "handoff" } // encaminhado para atendimento humano; run termina com sucesso
   | { action: "stop"; reason: string };
 
