@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContactStatusSelect } from "@/components/contacts/contact-status-select";
 import { STATUS_LABEL } from "@/lib/contact-status";
-import { matchesSegment, type ContactWithRelations } from "@/lib/data/segments";
+import { matchesSegment, type ContactWithRelations } from "@/lib/segment-match";
 import type { Segment } from "@/types/database";
 import { Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
