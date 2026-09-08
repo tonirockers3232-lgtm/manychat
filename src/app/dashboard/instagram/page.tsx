@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Instagram } from "lucide-react";
-import { DisconnectAccountButton } from "@/components/instagram/disconnect-account-button";
+import { DisconnectAccountButton, DeleteAccountButton } from "@/components/instagram/disconnect-account-button";
 
 const STATUS_LABEL: Record<string, { label: string; variant: "success" | "destructive" | "secondary" }> = {
   connected: { label: "Conectado", variant: "success" },
@@ -71,8 +71,9 @@ export default async function InstagramAccountsPage({
                 </div>
                 <Badge variant={status.variant}>{status.label}</Badge>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex gap-2">
                 <DisconnectAccountButton accountId={account.id} />
+                <DeleteAccountButton accountId={account.id} username={account.username} />
               </CardContent>
             </Card>
           );

@@ -26,6 +26,7 @@ const ENTITY_LABEL: Record<AuditEntityType, string> = {
   custom_field: "campo personalizado",
   segment: "segmento",
   broadcast: "mensagem em massa",
+  instagram_account: "conta do Instagram",
 };
 
 export default async function AuditLogsPage() {

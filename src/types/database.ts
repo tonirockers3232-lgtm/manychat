@@ -281,7 +281,7 @@ export interface Subscription {
 }
 
 export type AuditAction = "created" | "updated" | "status_changed" | "deleted";
-export type AuditEntityType = "automation" | "custom_field" | "segment" | "broadcast";
+export type AuditEntityType = "automation" | "custom_field" | "segment" | "broadcast" | "instagram_account";
 
 export interface AuditLog {
   id: string;
